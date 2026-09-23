@@ -1,0 +1,1493 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calculadora de infusiones intravenosas para cuidado crítico: mL/h, bolos, mezclas de referencia y el paso a paso de cada cálculo.">
+<meta name="theme-color" content="#163C9E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>html,body{margin:0}img{max-width:100%}</style>
+<title>Calculadora de Infusiones IV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#E9EFF4; --surface:#FFFFFF; --surface-2:#F5F8FB; --ink:#0F2230; --ink-2:#3B5261; --ink-3:#5F7684;
+  --line:#CBD7E0; --line-2:#E1E8EE;
+  --accent:#1F4FD8; --accent-ink:#FFFFFF; --accent-soft:#E3EBFF;
+  --pump:#163C9E; --pump-2:#2352CC; --lcd:#FFFFFF; --lcd-unit:#FFD166; --lcd-dim:#C9D8FF; --pump-ink:#FFFFFF;
+  --warn:#7A4300; --warn-bg:#FFF3DA; --warn-line:#EDC27A;
+  --danger:#9E1B1B; --danger-bg:#FCEAE8; --danger-line:#EFA7A1;
+  --info:#1D4880; --info-bg:#EAF1FB; --info-line:#B9CDEB;
+  --label-ink:#101418;
+  --shadow:0 1px 2px rgba(15,34,48,.06),0 6px 18px rgba(15,34,48,.06);
+  --radius:12px;
+  --font:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 110px}
+@media (min-width:960px){.shell{padding-block:26px 48px}}
+
+/* Encabezado */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:20px 22px;margin-bottom:20px;border-radius:16px;background:var(--pump);color:#fff;box-shadow:var(--shadow)}
+.brand{display:flex;gap:14px;align-items:center}
+.drop{flex:none;width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.drop svg{width:22px;height:22px}
+.brand h1{margin:0;font-size:clamp(1.45rem,1.05rem + 1.6vw,2.05rem);line-height:1.1;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:.3rem 0 0;color:#DCE6FF;max-width:62ch;font-size:.98rem}
+.top-note{margin:0;font-size:.85rem;color:#DCE6FF;max-width:34ch;border-left:2px solid rgba(255,255,255,.35);padding-left:12px}
+
+/* Rejilla */
+.layout{display:grid;gap:18px}
+@media (min-width:960px){
+  .layout{grid-template-columns:minmax(0,1fr) 410px;align-items:start}
+  .col-out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+}
+.col-in,.col-out{display:grid;gap:16px;min-width:0}
+
+.panel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px;display:grid;gap:14px;min-width:0;box-shadow:var(--shadow)}
+.step-h{display:flex;align-items:center;gap:10px;margin:0;font-size:1.12rem;line-height:1.25;color:var(--ink)}
+.step-h .no{flex:none;font-family:var(--mono);font-size:.8rem;font-weight:600;color:#fff;background:var(--accent);border-radius:999px;width:1.75rem;height:1.75rem;display:inline-grid;place-items:center}
+.step-h .aside{margin-left:auto;font-weight:400;font-size:.85rem;color:var(--ink-3)}
+
+label,.lbl{display:block;font-weight:700;font-size:.9rem;margin-bottom:6px;color:var(--ink)}
+.opt{font-weight:400;color:var(--ink-3)}
+input[type=text],select{width:100%;min-height:48px;font:inherit;font-size:1.05rem;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line);border-radius:9px;padding:10px 12px}
+select{padding-right:34px}
+input.num{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+input:disabled{opacity:.5}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=text]:focus,select:focus{border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
+.fine{margin:0;font-size:.86rem;color:var(--ink-3)}
+.fine b{color:var(--ink-2)}
+
+/* Paciente */
+.pt{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:12px;align-items:end}
+@media (max-width:520px){.pt{grid-template-columns:1fr}}
+.unit-in{position:relative}
+.unit-in input{padding-right:46px}
+.unit-in span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-family:var(--mono);font-size:.95rem;pointer-events:none}
+.flag{display:inline-flex;align-items:center;gap:8px;font-size:.86rem;padding:8px 12px;border-radius:9px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);min-height:48px}
+
+/* Medicamento */
+.linkish{background:none;border:0;padding:4px 0;font:inherit;font-size:.92rem;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer;justify-self:start}
+.label{border-radius:10px;padding:14px 16px;color:var(--label-ink);background:var(--lab,#fff);border:1px solid rgba(0,0,0,.18);display:grid;gap:2px}
+.label.plain{background:var(--surface-2);color:var(--ink);border:1.5px dashed var(--line)}
+.label-name{font-weight:700;font-size:1.3rem;line-height:1.2;letter-spacing:.005em}
+.label.stripes .label-name,.label.stripes .label-sub{background:rgba(255,255,255,.9);justify-self:start;padding:0 6px;border-radius:4px}
+.label-sub{font-family:var(--mono);font-size:.82rem;opacity:.85}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:.78rem;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface-2);letter-spacing:.01em}
+.tag.src{border-color:var(--info-line);color:var(--info);background:var(--info-bg)}
+.ind-t{margin:0;color:var(--ink-2);font-size:.95rem;max-width:70ch}
+.ind-name{margin:0;font-weight:700}
+details.obs{border-top:1px solid var(--line-2);padding-top:10px}
+details.obs summary{cursor:pointer;font-weight:700;font-size:.9rem;color:var(--ink-2)}
+details.obs ul{margin:.5rem 0 0;padding-left:1.1rem;color:var(--ink-2);font-size:.92rem;display:grid;gap:4px}
+.pres-list{margin:0;padding-left:1.1rem;font-size:.92rem;color:var(--ink-2)}
+
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+.seg.one{grid-template-columns:1fr}
+.seg button{font:inherit;font-size:.93rem;font-weight:700;border:0;border-radius:7px;padding:10px 8px;min-height:44px;background:transparent;color:var(--ink-2);cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 1px var(--line)}
+
+/* Preparación */
+.mixes{display:grid;gap:8px}
+.mix{font:inherit;text-align:left;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-size:.93rem;line-height:1.35}
+.mix:hover{border-color:var(--ink-3)}
+.mix[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.mix .t{font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;padding-top:2px}
+.mix-note{margin:0;font-size:.86rem;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.93rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;min-height:42px;cursor:pointer}
+.chip[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.chip:disabled{cursor:not-allowed;color:var(--ink-3);background:var(--surface-2);text-decoration:line-through}
+.prep-sum{margin:0;padding:12px 14px;border-radius:10px;background:var(--accent-soft);border:1px solid #C3D3FF;font-size:.95rem;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;color:var(--ink)}
+.prep-sum b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+.custom{display:grid;gap:12px;padding:12px;border:1.5px dashed var(--line);border-radius:10px}
+
+/* Dosis */
+.dose-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.range{margin:0;font-size:.88rem;color:var(--ink-2)}
+.range b{font-family:var(--mono);font-weight:600;color:var(--accent)}
+
+/* Lectura tipo bomba */
+.readout{background:var(--pump);color:var(--pump-ink);border-radius:16px;padding:18px;display:grid;gap:14px;box-shadow:0 10px 28px rgba(22,60,158,.28)}
+.ro-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--lcd-dim)}
+.ro-head .led{width:9px;height:9px;border-radius:50%;background:#5BE49B;box-shadow:0 0 8px #5BE49B}
+.ro-head .led.off{background:#FFD166;box-shadow:none}
+.tiles{display:grid;gap:10px}
+.tiles.two{grid-template-columns:1fr 1fr}
+.tile{background:var(--pump-2);border-radius:11px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.tile .k{font-size:.78rem;color:var(--lcd-dim)}
+.tile .v{font-family:var(--mono);font-weight:600;color:var(--lcd);font-variant-numeric:tabular-nums;line-height:1.05;font-size:1.7rem;overflow-wrap:anywhere}
+.tile .v small{font-size:.95rem;font-weight:500;color:var(--lcd-unit);margin-left:.35rem}
+.tile.big .v{font-size:clamp(2.5rem,2rem + 2.6vw,3.4rem)}
+.ro-meta{margin:0;display:grid;gap:6px}
+.ro-meta div{display:flex;justify-content:space-between;gap:12px;font-size:.9rem;border-top:1px solid rgba(255,255,255,.16);padding-top:6px}
+.ro-meta dt{color:var(--lcd-dim)}
+.ro-meta dd{margin:0;text-align:right;font-family:var(--mono);font-size:.86rem;color:var(--pump-ink)}
+.ro-err{margin:0;padding-left:1.1rem;color:#FFE08A;font-size:.92rem}
+.rev{display:grid;gap:6px;border-top:1px dashed rgba(255,255,255,.3);padding-top:12px}
+.rev label{color:var(--pump-ink);font-size:.86rem;margin:0}
+.rev-row{display:grid;grid-template-columns:minmax(0,130px) 1fr;gap:10px;align-items:center}
+.rev input{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff;min-height:44px}
+.rev input::placeholder{color:#C9D8FF}
+.rev output{font-family:var(--mono);color:var(--lcd-unit);font-size:1rem;font-weight:600}
+
+.alerts{display:grid;gap:8px}
+.alert{border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.92rem;display:flex;gap:10px}
+.alert::before{content:"!";flex:none;font-family:var(--mono);font-weight:600;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;border:1.5px solid currentColor;font-size:.75rem;margin-top:1px}
+.alert.danger{border-color:var(--danger-line);background:var(--danger-bg);color:var(--danger)}
+.alert.info{border-color:var(--info-line);background:var(--info-bg);color:var(--info)}
+.alert.info::before{content:"i"}
+
+.steps-btn{font:inherit;font-weight:700;font-size:1rem;width:100%;min-height:50px;border-radius:11px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.steps-btn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+.steps-btn svg{width:18px;height:18px;transition:transform .2s}
+.steps-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.steps-btn svg{transition:none}}
+.steps{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 18px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.steps ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:28px 1fr;gap:2px 10px}
+.steps li::before{content:counter(s);grid-row:span 3;font-family:var(--mono);font-size:.78rem;font-weight:600;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.st-t{font-weight:700;font-size:.93rem}
+.st-e{font-family:var(--mono);font-size:.86rem;color:var(--ink);overflow-wrap:anywhere;line-height:1.55}
+.st-e b{font-weight:600;color:var(--accent);background:var(--accent-soft);padding:0 4px;border-radius:4px}
+.st-n{font-size:.84rem;color:var(--ink-3)}
+.formula{border-top:1px solid var(--line-2);padding-top:12px;display:grid;gap:8px}
+.formula h3{margin:0;font-size:.9rem}
+.fx{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:.86rem;overflow-x:auto}
+.frac{display:inline-grid;text-align:center}
+.frac span:first-child{border-bottom:1.5px solid var(--ink);padding:0 6px 2px}
+.frac span:last-child{padding:2px 6px 0}
+.fx .res{font-weight:600;color:var(--accent)}
+.bands{width:100%;border-collapse:collapse;font-size:.88rem;font-family:var(--mono)}
+.bands td,.bands th{border-bottom:1px solid var(--line-2);padding:5px 6px;text-align:left}
+.bands tr.on td{background:var(--accent-soft);color:var(--ink);font-weight:600}
+
+/* Pie */
+footer{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:16px;font-size:.88rem;color:var(--ink-2)}
+@media (min-width:860px){footer{grid-template-columns:1.25fr 1fr}}
+footer h2{font-size:.95rem;margin:0 0 6px;color:var(--ink)}
+footer p,footer ol{margin:0}
+footer ol{padding-left:1.1rem;display:grid;gap:4px}
+.warn-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:.82rem}
+.legend i{width:18px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.25);display:inline-block}
+
+/* Titulación, lista del paciente, fuentes externas */
+.steps-btn.alt{border-color:var(--line);color:var(--ink)}
+.steps-btn.alt[aria-expanded="true"]{background:var(--surface-2);color:var(--ink)}
+.bands tr.out td{color:var(--ink-3)}
+.tag.ext{border-color:var(--warn-line);color:var(--warn);background:var(--warn-bg)}
+.add-btn{font:inherit;font-size:.92rem;font-weight:700;width:100%;min-height:44px;border-radius:10px;border:1.5px dashed rgba(255,255,255,.55);background:transparent;color:#fff;cursor:pointer}
+.add-btn:hover{background:rgba(255,255,255,.1)}
+.plist{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 18px;display:grid;gap:10px;box-shadow:var(--shadow)}
+.pl{list-style:none;margin:0;padding:0;display:grid}
+.pl li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--line-2)}
+.pl-main{display:grid;gap:2px;min-width:0}
+.pl-main span{font-size:.85rem;color:var(--ink-2)}
+.pl-rate{text-align:right;font-family:var(--mono);font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl-rate small{font-size:.75rem;margin-left:3px;color:var(--ink-3)}
+.pl-rate span{display:block;font-size:.75rem;font-weight:500;color:var(--ink-3)}
+.pl-act{grid-column:1/-1;display:flex;gap:8px}
+.mini{font:inherit;font-size:.82rem;padding:5px 12px;min-height:34px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.pl-tot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;font-family:var(--mono);font-size:.92rem}
+.pl-tot span{font-family:var(--font);font-weight:700}
+@media (min-width:960px){.col-out{max-height:calc(100vh - 32px);overflow-y:auto;padding-right:4px;scrollbar-gutter:stable}}
+
+/* Barra inferior móvil */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--pump);color:var(--pump-ink);box-shadow:0 -6px 18px rgba(22,60,158,.25);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.dock .dk{font-size:.8rem;color:var(--lcd-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dock .dv{font-family:var(--mono);font-weight:600;color:var(--lcd);font-size:1.5rem;white-space:nowrap}
+.dock .dv small{font-size:.85rem;margin-left:.3rem;color:var(--lcd-unit)}
+@media (min-width:960px){.dock{display:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="drop" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5c3.6 4.4 6.2 8 6.2 11.2A6.2 6.2 0 0 1 12 20a6.2 6.2 0 0 1-6.2-6.3C5.8 10.5 8.4 6.9 12 2.5Z" fill="#FFD166"/><path d="M9 14.2h6M12 11.2v6" stroke="#163C9E" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1>Calculadora de Infusiones IV</h1>
+        <p>Elija el medicamento, la mezcla y la dosis: obtiene los mL/h al instante y, con un clic, el paso a paso del cálculo.</p>
+      </div>
+    </div>
+    <p class="top-note">Herramienta de apoyo. Verifique siempre con doble chequeo y el protocolo institucional.</p>
+  </header>
+
+  <div class="layout">
+    <main class="col-in">
+      <!-- 1. Paciente -->
+      <section class="panel" aria-labelledby="h-pt">
+        <h2 class="step-h" id="h-pt"><span class="no">1</span>Paciente</h2>
+        <div class="pt">
+          <div>
+            <label for="wt">Peso</label>
+            <div class="unit-in"><input id="wt" data-k="wt" type="text" inputmode="decimal" class="num" autocomplete="off" value="70"><span>kg</span></div>
+          </div>
+          <div id="wtFlag" class="flag">Peso de ejemplo. Escriba el peso real del paciente.</div>
+        </div>
+      </section>
+
+      <!-- 2. Medicamento -->
+      <section class="panel" aria-labelledby="h-dr">
+        <h2 class="step-h" id="h-dr"><span class="no">2</span>Medicamento</h2>
+        <div>
+          <label for="drug">Buscar en la lista</label>
+          <select id="drug"></select>
+        </div>
+        <button type="button" class="linkish" data-act="otro" id="otroBtn">¿No está en la lista? Calcule con cualquier medicamento</button>
+        <div id="drugCard" style="display:grid;gap:12px"></div>
+      </section>
+
+      <!-- 3. Preparación -->
+      <section class="panel" id="prepPanel" aria-labelledby="h-pr">
+        <h2 class="step-h" id="h-pr"><span class="no">3</span>Preparación de la mezcla</h2>
+        <div id="mixWrap" style="display:grid;gap:8px">
+          <div class="lbl" style="margin:0">Mezclas de referencia <span class="opt">(toque una para cargarla)</span></div>
+          <div class="mixes" id="mixes"></div>
+          <p class="mix-note" id="mixNote" hidden></p>
+        </div>
+        <div id="presWrap">
+          <label for="pres">Presentación</label>
+          <select id="pres" data-k="pres"></select>
+        </div>
+        <div id="customWrap" class="custom" hidden>
+          <div id="nameWrap">
+            <label for="cName">Nombre del medicamento <span class="opt">(opcional)</span></label>
+            <input id="cName" data-k="cName" type="text" autocomplete="off" placeholder="Ej.: vasopresina">
+          </div>
+          <div class="grid3">
+            <div><label for="cAmt">Contenido por ampolla</label><input id="cAmt" data-k="cAmt" type="text" inputmode="decimal" class="num" autocomplete="off" placeholder="Ej.: 20"></div>
+            <div><label for="cU">Unidad</label><select id="cU" data-k="cU"></select></div>
+            <div><label for="cVol">Volumen por ampolla</label><div class="unit-in"><input id="cVol" data-k="cVol" type="text" inputmode="decimal" class="num" autocomplete="off" placeholder="Ej.: 1"><span>mL</span></div></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div><label for="n" id="nLbl">N.º de ampollas</label><input id="n" data-k="n" type="text" inputmode="decimal" class="num" autocomplete="off"></div>
+          <div><label for="dil">Volumen de diluyente</label><div class="unit-in"><input id="dil" data-k="dil" type="text" inputmode="decimal" class="num" autocomplete="off"><span>mL</span></div></div>
+        </div>
+        <div>
+          <div class="lbl" id="solLbl">Solución compatible</div>
+          <div class="chips" id="sols" role="radiogroup" aria-labelledby="solLbl"></div>
+          <p class="fine" id="solBad" style="margin-top:8px" hidden></p>
+        </div>
+        <p class="prep-sum" id="prepSum"></p>
+      </section>
+
+      <!-- 4. Dosis -->
+      <section class="panel" id="dosePanel" aria-labelledby="h-do">
+        <h2 class="step-h" id="h-do"><span class="no">4</span>Dosis</h2>
+        <div class="dose-row">
+          <div><label for="dose" id="doseLbl">Dosis deseada</label><input id="dose" data-k="dose" type="text" inputmode="decimal" class="num" autocomplete="off"></div>
+          <div><label for="unit">Unidad</label><select id="unit" data-k="unit"></select></div>
+        </div>
+        <div id="timeWrap" hidden>
+          <label for="time">Tiempo de administración <span class="opt">(opcional, para calcular mL/h)</span></label>
+          <div class="unit-in"><input id="time" data-k="time" type="text" inputmode="decimal" class="num" autocomplete="off"><span>min</span></div>
+        </div>
+        <p class="range" id="range"></p>
+        <p class="fine">Use coma para decimales (0,05). Al cambiar la dosis, el resultado se recalcula solo.</p>
+      </section>
+
+      <!-- 3'. Datos especiales -->
+      <section class="panel" id="spPanel" aria-labelledby="h-sp" hidden>
+        <h2 class="step-h" id="h-sp"><span class="no">3</span>Datos para el cálculo</h2>
+        <div id="spBox" style="display:grid;gap:12px"></div>
+      </section>
+    </main>
+
+    <aside class="col-out" aria-label="Resultado">
+      <div class="readout" id="readout" aria-live="polite">
+        <div class="ro-head"><span id="roDrug">Resultado</span><span class="led" id="roLed"></span></div>
+        <div class="tiles" id="tiles"></div>
+        <ul class="ro-err" id="roErr" hidden></ul>
+        <dl class="ro-meta" id="roMeta"></dl>
+        <div class="rev" id="revWrap" hidden>
+          <label for="rev">¿La bomba ya está corriendo? Escriba los mL/h para saber la dosis actual</label>
+          <div class="rev-row">
+            <div class="unit-in"><input id="rev" data-k="rev" type="text" inputmode="decimal" class="num" autocomplete="off"><span style="color:#C9D8FF">mL/h</span></div>
+            <output id="revOut" for="rev"></output>
+          </div>
+        </div>
+        <button type="button" class="add-btn" id="addBtn" data-act="add" hidden>+ Agregar a las infusiones del paciente</button>
+      </div>
+      <div class="alerts" id="alerts"></div>
+      <button type="button" class="steps-btn" id="stepsBtn" data-act="steps" aria-expanded="false" aria-controls="steps">
+        <span id="stepsTxt">Ver el paso a paso del cálculo</span>
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="steps" id="steps" hidden></div>
+      <button type="button" class="steps-btn alt" id="tabBtn" data-act="tab" aria-expanded="false" aria-controls="tabBox" hidden>
+        <span id="tabTxt">Ver la tabla de titulación</span>
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="steps" id="tabBox" hidden>
+        <div class="grid3">
+          <div><label for="tFrom">Desde</label><input id="tFrom" data-k="tFrom" type="text" inputmode="decimal" class="num" autocomplete="off"></div>
+          <div><label for="tTo">Hasta</label><input id="tTo" data-k="tTo" type="text" inputmode="decimal" class="num" autocomplete="off"></div>
+          <div><label for="tStep">Cada</label><input id="tStep" data-k="tStep" type="text" inputmode="decimal" class="num" autocomplete="off"></div>
+        </div>
+        <div id="tabTable" style="overflow-x:auto"></div>
+        <p class="fine" id="tabNote"></p>
+      </div>
+      <section class="plist" id="plist" aria-labelledby="h-pl">
+        <h2 class="step-h" id="h-pl">Infusiones del paciente <span class="aside" id="plCount"></span></h2>
+        <div id="plItems"></div>
+        <p class="fine">La lista se borra al recargar o cerrar la página.</p>
+      </section>
+    </aside>
+  </div>
+
+  <footer>
+    <div class="warn-box">
+      <h2>Uso responsable</h2>
+      <p>Esta calculadora apoya el cálculo de diluciones y velocidades de infusión. No reemplaza la prescripción médica, el criterio clínico, el protocolo institucional ni el doble chequeo de enfermería. Verifique presentación, compatibilidad y estabilidad con farmacia. Las mezclas marcadas <b>Adaptada</b> corrigen o completan un dato de la guía fuente (la nota de cada mezcla explica el ajuste); las marcadas <b>Ficha técnica</b> provienen del inserto del fabricante.</p>
+    </div>
+    <div>
+      <h2>Fuentes</h2>
+      <ol>
+        <li>Soto Muñoz L. <i>Dosis, diluciones e infusiones en paciente crítico y emergencias</i>. Versión 1.0.3. Costa Rica; 2022.</li>
+        <li>Castañeda Vargas WR. <i>Infusiones intravenosas: guía para aprender y entenderlas sin dolor</i> (presentación). Hospital Regional Segundo Nivel Valle de Tenza; 2025.</li>
+      </ol>
+      <p style="margin-top:10px">Fuentes externas de la vasopresina, el sulfato de magnesio, el labetalol, el esmolol y algunas diluciones:</p>
+      <ol start="3" style="margin-top:4px">
+        <li>Evans L, et al. Surviving Sepsis Campaign: international guidelines for management of sepsis and septic shock 2021. <i>Crit Care Med</i>. 2021;49(11):e1063–e1143.</li>
+        <li>Whelton PK, et al. 2017 ACC/AHA guideline for the prevention, detection, evaluation, and management of high blood pressure in adults. <i>Hypertension</i>. 2018;71:e13–e115.</li>
+        <li>Ministerio de Salud y Protección Social de Colombia. Guía de práctica clínica para la prevención, detección temprana y tratamiento de las complicaciones del embarazo relacionadas con trastornos hipertensivos. 2013.</li>
+        <li>American Heart Association. Guías de reanimación cardiopulmonar y atención cardiovascular de emergencia (soporte vital avanzado).</li>
+        <li>Global Initiative for Asthma (GINA). Global strategy for asthma management and prevention. 2024.</li>
+        <li>Fichas técnicas (insertos del fabricante) de vasopresina, labetalol, esmolol, ketamina y azul de metileno.</li>
+      </ol>
+      <p style="margin-top:10px">Las presentaciones marcadas «Colombia» son frecuentes en el país, pero deben verificarse con la farmacia de cada institución.</p>
+      <p style="margin-top:10px">Color de la etiqueta del medicamento: código de etiquetas de jeringa ISO 26825, cuando aplica.</p>
+      <div class="legend" id="legend"></div>
+    </div>
+  </footer>
+</div>
+
+<div class="dock" id="dock" hidden role="button" tabindex="0" aria-label="Ir al resultado">
+  <span class="dk" id="dockK">Resultado</span>
+  <span class="dv" id="dockV">—</span>
+</div>
+
+<script>
+'use strict';
+/* ───────────── Unidades ───────────── */
+const AMT={mcg:{c:'mass',f:1},mg:{c:'mass',f:1e3},g:{c:'mass',f:1e6},UI:{c:'UI',f:1},mEq:{c:'mEq',f:1},mmol:{c:'mmol',f:1}};
+const TF={min:60,h:1,'día':1/24};
+const CONT_U={mass:['mcg/kg/min','mcg/kg/h','mg/kg/h','mcg/min','mg/min','mcg/h','mg/h','g/h','mg/kg/día','mg/día','g/día'],UI:['UI/kg/h','UI/h','UI/min'],mEq:['mEq/h','mEq/kg/h'],mmol:['mmol/h','mmol/kg/h']};
+const BOLO_U={mass:['mg/kg','mcg/kg','mg','mcg','g'],UI:['UI/kg','UI'],mEq:['mEq/kg','mEq'],mmol:['mmol/kg','mmol']};
+const DEF_C={mass:'mg/h',UI:'UI/h',mEq:'mEq/h',mmol:'mmol/h'};
+const DEF_B={mass:'mg',UI:'UI',mEq:'mEq',mmol:'mmol'};
+function pu(u){const p=u.split('/');const last=p[p.length-1];return{a:p[0],kg:p.includes('kg'),t:(last in TF)?last:null};}
+
+const SOL={
+  SF:{s:'SSN 0,9 %',l:'Solución salina 0,9 % (SF)'},
+  SG5:{s:'DAD 5 %',l:'Dextrosa 5 % en agua (SG5 %)'},
+  SG10:{s:'DAD 10 %',l:'Dextrosa 10 % (SG10 %)'},
+  SM:{s:'Mixta (SM)',l:'Solución mixta: DAD 5 % en SSN (SM)'},
+  API:{s:'Agua estéril',l:'Agua estéril para inyección (API)'},
+  JUGO:{s:'Jugo de frutas',l:'Jugo de frutas (vía enteral)'},
+  PURA:{s:'Sin diluir',l:'Pura, sin diluir'}
+};
+const GROUPS=[['vaso','Vasopresores e inotrópicos'],['vasod','Antihipertensivos y vasodilatadores'],['sed','Sedación, analgesia e inducción'],['bnm','Bloqueo neuromuscular'],['arr','Antiarrítmicos y anticolinérgicos'],['coag','Anticoagulación y trombólisis'],['elec','Electrolitos'],['gi','Gastrointestinal, endocrino y otros'],['infx','Antiinfecciosos'],['tox','Antídotos y toxicología']];
+const ISO={
+  vaso:{c:'#C9A0E6',n:'Vasopresor'},
+  hipo:{c:'repeating-linear-gradient(135deg,#C9A0E6 0 10px,#FFFFFF 10px 20px)',n:'Hipotensor',s:1},
+  induc:{c:'#FFD83D',n:'Inductor'},
+  benzo:{c:'#FF8A1F',n:'Benzodiacepina'},
+  opi:{c:'#67B7E8',n:'Opioide'},
+  antiopi:{c:'repeating-linear-gradient(135deg,#67B7E8 0 10px,#FFFFFF 10px 20px)',n:'Antagonista de opioide',s:1},
+  bnm:{c:'#FF6B6B',n:'Bloqueante neuromuscular'},
+  local:{c:'#B4B0A8',n:'Anestésico local'},
+  anticol:{c:'#A6D85F',n:'Anticolinérgico'}
+};
+const SRC={G:'Guía 2022 v1.0.3',P:'Presentación HRVT 2025'};
+const MIXSRC={G:'Guía',P:'HRVT',A:'Adaptada',F:'Ficha técnica',C:'Colombia'};
+
+/* ───────────── Medicamentos (fuente: guía 2022 y presentación HRVT) ───────────── */
+const DRUGS=[
+/* Vasopresores e inotrópicos */
+{id:'noradrenalina',name:'Norepinefrina (noradrenalina)',grp:'vaso',iso:'vaso',src:['G','P'],
+ pres:[{id:'a',lbl:'Ampolla 4 mg / 4 mL (1 mg/mL)',amt:4,u:'mg',vol:4,form:'ampolla'}],
+ sol:['SG5'],
+ ind:[
+  {n:'Choque séptico',t:'Inicial 0,01–0,15 mcg/kg/min; intervalo habitual 0,025–0,3 mcg/kg/min; choque refractario 0,5–3,3 mcg/kg/min. Meta PAM ≥ 65 mmHg (AHA, SCCM).',c:{u:'mcg/kg/min',min:0.01,max:3.3,def:0.1}},
+  {n:'Choque de cualquier etiología',src:'P',t:'0,05–0,5 mcg/kg/min; después definir la necesidad de iniciar un segundo vasopresor.',c:{u:'mcg/kg/min',min:0.05,max:0.5,def:0.05}},
+  {n:'Choque cardiogénico',t:'0,05–0,4 mcg/kg/min (AHA).',c:{u:'mcg/kg/min',min:0.05,max:0.4,def:0.05}},
+  {n:'Atención post-paro (post-PCR)',t:'Inicial 0,1–0,5 mcg/kg/min (7–35 mcg/min); titular hasta la respuesta deseada (AHA).',c:{u:'mcg/kg/min',min:0.1,max:0.5,def:0.1}}
+ ],
+ mix:[{m:'c',p:'a',n:4,dil:234,sol:'SG5',lbl:'4 ampollas (16 mg) + 234 mL DAD 5 % → 250 mL',note:'64 mcg/mL. Guía: 16 mL/h ≈ 0,25 mcg/kg/min y 130 mL/h ≈ 2 mcg/kg/min en 70 kg.'}],
+ obs:['Usar vasopresores si el paciente está hipotenso durante o después de la reanimación con líquidos, para mantener PAM ≥ 65 mmHg (AHA, SCCM).']},
+
+{id:'epinefrina',name:'Epinefrina (adrenalina)',grp:'vaso',iso:'vaso',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 1 mg / 1 mL (1:1.000)',amt:1,u:'mg',vol:1,form:'ampolla'}],
+ sol:['SF'],pure:true,
+ ind:[
+  {n:'Choque (inotrópico / vasopresor)',t:'Infusión continua: inicial 0,01–0,5 mcg/kg/min, hasta 2 mcg/kg/min en choque refractario.',c:{u:'mcg/kg/min',min:0.01,max:2,def:0.05}},
+  {n:'Bradicardia o bloqueo AV sin respuesta a atropina',t:'Infusión 0,1–0,5 mcg/kg/min.',c:{u:'mcg/kg/min',min:0.1,max:0.5,def:0.1}},
+  {n:'Paro cardiaco (asistolia, AESP, FV/TV sin pulso)',t:'1 mg IV o intraóseo cada 3–5 min hasta el retorno de la circulación espontánea, usando la solución de 0,1 mg/mL (AHA 2019).',b:{u:'mg',min:1,max:1,def:1}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:10,dil:90,sol:'SF',lbl:'10 ampollas (10 mg) + 90 mL SSN → 100 mL',note:'100 mcg/mL. La guía escribe "iniciar a 3 mL/min (5 mcg/min)": con esta mezcla 5 mcg/min = 3 mL/h. 84 mL/h ≈ 2 mcg/kg/min en 70 kg.'},
+  {m:'b',p:'a',n:1,dil:9,sol:'SF',lbl:'1 ampolla (1 mg) + 9 mL SSN → 10 mL (0,1 mg/mL)',note:'Solución de 0,1 mg/mL que indica la guía para el bolo en paro.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 1 mg/mL (sin diluir)'}
+ ],
+ obs:['Puede causar taquicardia y acidosis metabólica por hipoperfusión esplácnica. La acción inotrópica predomina a dosis bajas y la vasoconstrictora a dosis altas.','Vía IM de elección en choque anafiláctico.']},
+
+{id:'dopamina',name:'DOPamina',grp:'vaso',iso:'vaso',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 200 mg / 5 mL (40 mg/mL)',amt:200,u:'mg',vol:5,form:'ampolla'}],
+ sol:['SF','SG5','SM'],
+ ind:[{n:'Choque cardiogénico / soporte inotrópico',t:'2–20 mcg/kg/min; ajustar con incrementos de 5–10 mcg/kg/min (máximo 50; dosis > 20 pueden no mejorar la presión arterial y aumentan las taquiarritmias). Dosis baja 1–5: ↑ flujo renal y diuresis; intermedia 5–10: ↑ frecuencia, contractilidad y gasto; alta > 10: predominio alfa (vasoconstricción).',c:{u:'mcg/kg/min',min:2,max:20,def:5,hard:50}}],
+ mix:[
+  {m:'c',p:'a',n:2,dil:240,sol:'SF',lbl:'2 ampollas (400 mg) + 240 mL SSN → 250 mL',note:'1,6 mg/mL (la tabla de la guía dice 1,8 mg/mL; el cálculo exacto es 1,6). 5,3–52 mL/h = 2–20 mcg/kg/min en 70 kg.'},
+  {m:'c',p:'a',n:4,dil:230,sol:'SF',lbl:'4 ampollas (800 mg) + 230 mL SSN → 250 mL',note:'3,2 mg/mL. En 70 kg, 2–20 mcg/kg/min = 2,6–26 mL/h (la guía escribe 6,6 como límite inferior).'}
+ ],
+ obs:['Efectos inotrópicos y vasopresores; puede causar hipertensión pulmonar. Efectos hemodinámicos dosis-dependientes.']},
+
+{id:'dobutamina',name:'DOBUTamina',grp:'vaso',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 250 mg / 20 mL (12,5 mg/mL)',amt:250,u:'mg',vol:20,form:'frasco'}],
+ sol:['SG5'],bad:{SF:'la guía indica que precipita en SSN'},
+ ind:[{n:'Choque cardiogénico',t:'2,5–15 mcg/kg/min. En raras ocasiones se han requerido hasta 40 mcg/kg/min.',c:{u:'mcg/kg/min',min:2.5,max:15,def:2.5,hard:40}}],
+ mix:[{m:'c',p:'a',n:1,dil:230,sol:'SG5',src:'A',lbl:'1 frasco (250 mg) + 230 mL DAD 5 % → 250 mL',note:'1 mg/mL. Ajustada: la guía escribe "en 80 mL", pero sus velocidades (10,5–63 mL/h para 2,5–15 mcg/kg/min en 70 kg) y su rango de concentración (0,25–2 mg/mL) corresponden a 250 mL totales.'}],
+ conc:[{gt:2,u:'mg',l:'warn',msg:'Supera el rango de concentración de la guía (0,25–2 mg/mL).'}],
+ obs:['Soporte inotrópico a corto plazo en descompensación cardiaca por contractilidad deprimida.']},
+
+/* Vasodilatadores */
+{id:'nitroglicerina',name:'Nitroglicerina',grp:'vasod',iso:'hipo',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 50 mg / 10 mL (5 mg/mL)',amt:50,u:'mg',vol:10,form:'frasco'}],
+ sol:['SF'],
+ ind:[
+  {n:'Angina de pecho',t:'Inicio 5–10 mcg/min con monitoría cardiaca; aumentar 5 mcg/min cada 5–10 min hasta 20 mcg/min; si persiste, aumentar 10–20 mcg/min cada 3–5 min hasta un máximo de 400 mcg/min (ACC/AHA).',c:{u:'mcg/min',min:5,max:400,def:10}},
+  {n:'Edema agudo de pulmón',t:'EM-Crit reporta macrodosis progresivas de hasta 800 mcg/min.',c:{u:'mcg/min',min:5,max:800,def:10}}
+ ],
+ mix:[{m:'c',p:'a',n:1,dil:240,sol:'SF',lbl:'1 frasco (50 mg) + 240 mL SSN → 250 mL',note:'200 mcg/mL. 1,5 mL/h = 5 mcg/min; 240 mL/h = 800 mcg/min.'}],
+ obs:['Amplio margen terapéutico; vasodilatación venosa.','Taquifilaxia a las 24–48 h de infusión continua. Metahemoglobinemia con dosis altas.']},
+
+{id:'nitroprusiato',name:'Nitroprusiato de sodio',grp:'vasod',iso:'hipo',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 50 mg (reconstituir con 2 mL de DAD 5 %: 25 mg/mL)',amt:50,u:'mg',vol:2,form:'frasco'}],
+ sol:['SG5'],
+ ind:[
+  {n:'Hipertensión aguda',t:'Inicial 0,3–0,5 mcg/kg/min; ajustar cada pocos minutos. Máximo 10 mcg/kg/min (por máximo 10 min). Algunos recomiendan no superar 2 mcg/kg/min para evitar toxicidad.',c:{u:'mcg/kg/min',min:0.3,max:10,def:0.3}},
+  {n:'Insuficiencia cardiaca aguda descompensada',t:'Inicial 5–10 mcg/min; rango habitual 5–300 mcg/min. No se recomiendan dosis > 400 mcg/min por toxicidad por tiocianato (HFSA).',c:{u:'mcg/min',min:5,max:300,def:5,hard:400}}
+ ],
+ mix:[{m:'c',p:'a',n:1,dil:250,sol:'SG5',lbl:'1 frasco (50 mg) + 250 mL DAD 5 % → 252 mL',note:'≈ 200 mcg/mL. En 70 kg: 6,3 mL/h ≈ 0,3 mcg/kg/min y 210 mL/h ≈ 10 mcg/kg/min.'}],
+ obs:['Proteger de la luz: cubrir el recipiente con papel aluminio u otro material opaco.','No recomendado en falla renal.']},
+
+/* Sedación, analgesia e inducción */
+{id:'midazolam',name:'Midazolam',grp:'sed',iso:'benzo',src:['G','P'],
+ pres:[
+  {id:'a',lbl:'Ampolla 15 mg / 3 mL (5 mg/mL)',amt:15,u:'mg',vol:3,form:'ampolla'},
+  {id:'b',lbl:'Ampolla 50 mg / 10 mL (5 mg/mL)',amt:50,u:'mg',vol:10,form:'ampolla'},
+  {id:'c',lbl:'Ampolla 5 mg / 1 mL (5 mg/mL)',amt:5,u:'mg',vol:1,form:'ampolla'}
+ ],
+ sol:['SF','SG5'],pure:true,
+ ind:[
+  {n:'Sedación en ventilación mecánica (UCI)',t:'Carga 0,5–5 mg cada 1–5 min si es necesario; luego 1–8 mg/h o 0,01–0,1 mg/kg/h. Rango 50–150 mcg/kg/h. Para no subir demasiado la infusión basal, prefiera bolos adicionales.',c:{u:'mcg/kg/h',min:10,max:150,def:50},b:{u:'mg',min:0.5,max:5,def:2}},
+  {n:'Sedación e intubación de secuencia rápida',src:'P',t:'Carga 0,1–0,3 mg/kg en bolo; mantenimiento 0,05–0,2 mg/kg/h. También se usa como anticonvulsivante.',c:{u:'mg/kg/h',min:0.05,max:0.2,def:0.05},b:{u:'mg/kg',min:0.1,max:0.3,def:0.1}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:6,dil:72,sol:'SF',lbl:'6 ampollas (90 mg) + 72 mL SSN → 90 mL',note:'1 mg/mL. Guía: 6–15 mL/h.'},
+  {m:'c',p:'a',n:8,dil:96,sol:'SF',lbl:'8 ampollas (120 mg) + 96 mL SSN → 120 mL',note:'1 mg/mL. La guía escribe "para 100 mL", pero 24 mL + 96 mL = 120 mL.'},
+  {m:'c',p:'a',n:12,dil:54,sol:'SF',lbl:'12 ampollas (180 mg) + 54 mL SSN → 90 mL',note:'2 mg/mL (la tabla de la guía dice 1 mg/mL; el cálculo exacto es 2 mg/mL). Guía: 1,8–5,6 mL/h.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 5 mg/mL (sin diluir)'}
+ ],
+ obs:['Sustituir por diazepam cuando se prevé sedación prolongada (> 72 h).','Alternativa IM en intoxicación por anfetaminas si no hay acceso venoso.','Rango de concentración 1–5 mg/mL.']},
+
+{id:'propofol',name:'Propofol 1 %',grp:'sed',iso:'induc',src:['G'],stab:6,
+ pres:[{id:'a',lbl:'Ampolla 200 mg / 20 mL (10 mg/mL)',amt:200,u:'mg',vol:20,form:'ampolla'}],
+ sol:['SG5'],pure:true,
+ ind:[
+  {n:'Sedación en UCI: infusión usual',t:'Dosis usual 1–5 mg/kg/h (máximo 10 mg/kg/h). Bolo 1–2 mg/kg en 1 min.',c:{u:'mg/kg/h',min:1,max:5,def:1,hard:10},b:{u:'mg/kg',min:1,max:2,def:1,time:1}},
+  {n:'Sedación tras la inducción (esquema de la guía)',t:'Infusión 50–200 mcg/kg/min. Tras la inducción suelen requerirse 150–200 mcg/kg/min los primeros 10–15 min y luego reducir 30–50 % en la primera media hora; en mantenimiento, 50–100 mcg/kg/min.',c:{u:'mcg/kg/min',min:50,max:200,def:50},b:{u:'mg/kg',min:1,max:2,def:1,time:1}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:5,dil:400,sol:'SG5',lbl:'5 ampollas (1.000 mg) + 400 mL DAD 5 % → 500 mL',note:'2 mg/mL. 105–420 mL/h = 50–200 mcg/kg/min en 70 kg.'},
+  {m:'c',p:'a',n:12,dil:0,sol:'PURA',lbl:'12 ampollas puras (2.400 mg) → 240 mL',note:'10 mg/mL. 21–84 mL/h = 50–200 mcg/kg/min en 70 kg (la guía escribe "mcg/kg/hora"; corresponde a mcg/kg/min).'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 10 mg/mL (sin diluir)'}
+ ],
+ conc:[{lt:2,u:'mg',skipPure:1,l:'danger',msg:'No diluir por debajo de 2 mg/mL (guía: 2 mg/mL en DAD 5 %).'}],
+ obs:['Parte de la estrategia multimodal; preferido sobre benzodiacepinas por menor sedación prolongada y mejor tiempo de extubación.','Reportes de hipertrigliceridemia y pancreatitis.','El fabricante recomienda recambiar la infusión a las 6 horas.']},
+
+{id:'dexmedetomidina',name:'Dexmedetomidina',grp:'sed',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 200 mcg / 2 mL (100 mcg/mL)',amt:200,u:'mcg',vol:2,form:'frasco'}],
+ sol:['SF'],
+ ind:[
+  {n:'Sedación en UCI',t:'Carga 1 mcg/kg en 10 min; mantenimiento 0,2–0,7 mcg/kg/h. Dosis máxima 1,5 mcg/kg/h.',c:{u:'mcg/kg/h',min:0.2,max:0.7,def:0.2,hard:1.5},b:{u:'mcg/kg',min:1,max:1,def:1,time:10}},
+  {n:'Sedación para procedimientos',t:'Carga 1 mcg/kg en 10 min; infusión inicial 0,6 mcg/kg/h, titulada entre 0,2 y 1 mcg/kg/h.',c:{u:'mcg/kg/h',min:0.2,max:1,def:0.6,hard:1.5},b:{u:'mcg/kg',min:1,max:1,def:1,time:10}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:1,dil:48,sol:'SF',lbl:'1 frasco (200 mcg) + 48 mL SSN → 50 mL',note:'4 mcg/mL (concentración recomendada por monografía). 3,5–17,5 mL/h = 0,2–1 mcg/kg/h en 70 kg.'},
+  {m:'c',p:'a',n:2,dil:96,sol:'SF',lbl:'2 frascos (400 mcg) + 96 mL SSN → 100 mL',note:'4 mcg/mL.'},
+  {m:'c',p:'a',n:5,dil:90,sol:'SF',lbl:'5 frascos (1.000 mcg) + 90 mL SSN → 100 mL',note:'10 mcg/mL. 1,4–7 mL/h = 0,2–1 mcg/kg/h en 70 kg.'},
+  {m:'b',p:'a',n:1,dil:48,sol:'SF',lbl:'1 frasco (200 mcg) + 48 mL SSN → 50 mL',note:'4 mcg/mL: carga de 1 mcg/kg en 10 min.'}
+ ],
+ obs:['Agonista alfa-2 central: ansiólisis y analgesia moderadas.','Bradicardia sinusal; si la carga se pasa rápido, hipotensión (precaución en hipovolemia).','Exposición > 24 h se relaciona con taquifilaxia.']},
+
+{id:'fentanilo',name:'Fentanilo',grp:'sed',iso:'opi',src:['G','P'],
+ pres:[
+  {id:'a',lbl:'Ampolla 0,5 mg / 10 mL (50 mcg/mL)',amt:500,u:'mcg',vol:10,form:'ampolla',src:'P'},
+  {id:'b',lbl:'Ampolla 100 mcg / 2 mL (50 mcg/mL)',amt:100,u:'mcg',vol:2,form:'ampolla',src:'G'}
+ ],
+ sol:['SF'],pure:true,
+ ind:[{n:'Sedoanalgesia en UCI',t:'Carga 25–100 mcg STAT (1–2 mcg/kg). Mantenimiento 0,7–10 mcg/kg/h (20–200 mcg/h). Titular según analgesia o sedación.',c:{u:'mcg/kg/h',min:0.7,max:10,def:1},b:{u:'mcg/kg',min:1,max:2,def:1}}],
+ mix:[
+  {m:'c',p:'a',n:2,dil:80,sol:'SF',src:'P',lbl:'2 ampollas de 0,5 mg (1.000 mcg) + 80 mL SSN → 100 mL',note:'10 mcg/mL: la misma concentración de la guía, con la presentación de 0,5 mg/10 mL.'},
+  {m:'c',p:'b',n:10,dil:80,sol:'SF',lbl:'10 ampollas de 100 mcg (1.000 mcg) + 80 mL SSN → 100 mL',note:'10 mcg/mL. Guía: 7–70 mL/h = 1–10 mcg/kg/h en 70 kg. (La guía rotula la ampolla como "100 mcg/mL", pero su mezcla implica 100 mcg en 2 mL).'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 50 mcg/mL (sin diluir)'}
+ ],
+ obs:['No causa hipotensión salvo que exista un estado adrenérgico por dolor.','Titular versus analgesia o sedación del paciente.']},
+
+{id:'morfina',name:'Morfina',grp:'sed',iso:'opi',src:['G'],
+ pres:[{id:'b',lbl:'Ampolla 10 mg / 1 mL',amt:10,u:'mg',vol:1,form:'ampolla',src:'C'},{id:'a',lbl:'Ampolla 15 mg / 1 mL',amt:15,u:'mg',vol:1,form:'ampolla',src:'G'}],
+ sol:['SF'],
+ ind:[{n:'Analgesia paliativa / disnea en UCI',t:'Iniciar con 2–10 mg/h (las mezclas de la guía arrancan en 1 mL/h = 1 mg/h). Conversión: 1 mg IV = 3 mg VO (pacientes no vírgenes a opioides).',c:{u:'mg/h',min:1,max:10,def:1}}],
+ mix:[
+  {m:'c',p:'b',n:10,dil:90,sol:'SF',src:'C',lbl:'10 ampollas de 10 mg (100 mg) + 90 mL SSN → 100 mL',note:'1 mg/mL, la misma concentración de la guía, con la presentación de 10 mg/mL. Verifique la presentación con farmacia.'},
+  {m:'c',p:'a',n:6,dil:84,sol:'SF',lbl:'6 ampollas (90 mg) + 84 mL SSN → 90 mL',note:'1 mg/mL. Iniciar con 1 mL/h.'},
+  {m:'c',p:'a',n:8,dil:112,sol:'SF',lbl:'8 ampollas (120 mg) + 112 mL SSN → 120 mL',note:'1 mg/mL. 1–10 mL/h.'},
+  {m:'c',p:'a',n:12,dil:168,sol:'SF',lbl:'12 ampollas (180 mg) + 168 mL SSN → 180 mL',note:'1 mg/mL. 1–10 mL/h.'}
+ ],
+ obs:['Se han descrito macrodosis de hasta 300 mg/h; las dosis altas producen más efectos secundarios.','Tener en cuenta la equivalencia oral–IV si el paciente ya recibía opioides.']},
+
+{id:'ketamina',name:'Ketamina',grp:'sed',iso:'induc',src:['G'],
+ pres:[{id:'b',lbl:'Frasco 500 mg / 10 mL (50 mg/mL)',amt:500,u:'mg',vol:10,form:'frasco',src:'C'},{id:'a',lbl:'Frasco 200 mg / 20 mL (10 mg/mL)',amt:200,u:'mg',vol:20,form:'frasco',src:'G'}],
+ sol:['SF','SG5'],pure:true,solInfo:'SSN y DAD 5 %: según la ficha técnica; la guía solo describe la presentación de 10 mg/mL sin diluir.',
+ ind:[{n:'Sedoanalgesia en ventilación mecánica (UCI)',t:'Bolo inicial 0,5 mg/kg; infusión 0,2–0,5 mg/kg/h ajustada al dolor o a la meta de sedación (rango 0,04–2,5 mg/kg/h) (SCCM). La tabla de diluciones de la guía usa 0,5–4 mg/kg/h.',c:{u:'mg/kg/h',min:0.04,max:2.5,def:0.2},b:{u:'mg/kg',min:0.5,max:0.5,def:0.5}}],
+ mix:[
+  {m:'c',p:'b',n:1,dil:240,sol:'SF',src:'F',lbl:'1 frasco de 500 mg + 240 mL SSN → 250 mL (2 mg/mL)',note:'Ficha técnica: para infusión de mantenimiento diluir en SSN o DAD 5 % a 1–2 mg/mL. 0,2 mg/kg/h = 7 mL/h en 70 kg.'},
+  {m:'b',p:'b',n:1,dil:0,sol:'PURA',src:'C',lbl:'Pura 50 mg/mL (sin diluir)'},
+  {m:'c',p:'a',n:3,dil:0,sol:'PURA',lbl:'3 frascos puros (600 mg) → 60 mL',note:'10 mg/mL. Guía: 3,5–28 mL/h = 0,5–4 mg/kg/h en 70 kg. Presentaciones de 10–50 mg/mL no se diluyen.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 10 mg/mL (sin diluir)'}
+ ],
+ obs:['ACEP: contraindicación relativa en porfiria por su efecto simpaticomimético.','Sustancia controlada. Alucinaciones, sueños vívidos y delirio.']},
+
+{id:'tiopental',name:'Tiopental',grp:'sed',iso:'induc',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 500 mg / 20 mL (25 mg/mL)',amt:500,u:'mg',vol:20,form:'frasco'}],
+ sol:['SF','SG5'],pure:true,
+ ind:[
+  {n:'Sedación en UCI',t:'1,5–5 mg/kg/h.',c:{u:'mg/kg/h',min:1.5,max:5,def:1.5}},
+  {n:'Inducción anestésica',t:'3–6 mg/kg IV; mantenimiento 25–100 mg según necesidad. Inicio < 30 s y duración de 5–10 min según la dosis.',b:{u:'mg/kg',min:3,max:6,def:3}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:4,dil:420,sol:'SF',lbl:'4 frascos (2.000 mg) + 420 mL SSN → 500 mL',note:'4 mg/mL. 26,3–87,5 mL/h = 1,5–5 mg/kg/h en 70 kg.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Frasco reconstituido 25 mg/mL'}
+ ],
+ obs:['Barbitúrico de acción ultracorta: depresión respiratoria y disminución del gasto cardiaco.','El ácido valproico potencia su efecto.']},
+
+/* Bloqueo neuromuscular */
+{id:'atracurio',name:'Atracurio',grp:'bnm',iso:'bnm',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 25 mg / 2,5 mL (10 mg/mL)',amt:25,u:'mg',vol:2.5,form:'ampolla'}],
+ sol:['SF','SG5','SM'],pure:true,
+ ind:[
+  {n:'Parálisis neuromuscular en UCI',t:'Hasta 48 h en SDRA temprano con PaO2/FiO2 < 150 (facilitar la ventilación) o escalofríos en hipotermia terapéutica: bolo 0,4–0,5 mg/kg y luego 5–40 mcg/kg/min (0,3–2,4 mg/kg/h) (ACCM/SCCM/ASHP).',c:{u:'mcg/kg/min',min:5,max:40,def:5},b:{u:'mg/kg',min:0.4,max:0.5,def:0.4}},
+  {n:'Intubación endotraqueal',t:'0,5–0,6 mg/kg IV; el efecto inicia a los 90 segundos.',b:{u:'mg/kg',min:0.5,max:0.6,def:0.5}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:10,dil:75,sol:'SF',lbl:'10 ampollas (250 mg) + 75 mL SSN → 100 mL',note:'2,5 mg/mL. 8,4–67,8 mL/h = 5–40 mcg/kg/min en 70 kg. (La guía escribe "100 mg"; 10 ampollas de 25 mg son 250 mg).'},
+  {m:'c',p:'a',n:24,dil:190,sol:'SF',lbl:'24 ampollas (600 mg) + 190 mL SSN → 250 mL',note:'2,4 mg/mL. Guía: 8–70 mL/h.'},
+  {m:'c',p:'a',n:24,dil:0,sol:'PURA',lbl:'24 ampollas puras (600 mg) → 60 mL',note:'10 mg/mL. Guía: 2–16 mL/h.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 10 mg/mL (sin diluir)'}
+ ],
+ obs:['El paciente debe estar sedado previamente. Puede inducir liberación de histamina.','No requiere ajuste en insuficiencia renal.','En hipotermia terapéutica (25–28 °C) o bypass cardiopulmonar puede requerirse la mitad de la dosis.']},
+
+{id:'pancuronio',name:'Pancuronio',grp:'bnm',iso:'bnm',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 4 mg / 2 mL (2 mg/mL)',amt:4,u:'mg',vol:2,form:'ampolla'}],
+ sol:['SF','SG5','SM'],pure:true,
+ ind:[{n:'Parálisis neuromuscular en UCI',t:'Hasta 48 h en SDRA temprano (PaO2/FiO2 < 150) o escalofríos en hipotermia terapéutica: bolo 0,06–0,1 mg/kg y luego 1–2 mcg/kg/min (0,06–0,12 mg/kg/h) (SCCM) o 0,8–1,7 mcg/kg/min.',c:{u:'mg/kg/h',min:0.06,max:0.12,def:0.06},b:{u:'mg/kg',min:0.06,max:0.1,def:0.06}}],
+ mix:[
+  {m:'c',p:'a',n:20,dil:160,sol:'SF',lbl:'20 ampollas (80 mg) + 160 mL SSN → 200 mL',note:'0,4 mg/mL. 10,5–21 mL/h = 0,06–0,12 mg/kg/h en 70 kg. (La guía escribe "90 mg: 20 mL"; 20 ampollas de 4 mg/2 mL son 80 mg en 40 mL).'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 2 mg/mL (sin diluir)'}
+ ],
+ obs:['Preferible al atracurio en asma, EPOC o inestabilidad hemodinámica.','El uso prolongado se asocia a miopatías y miastenia. Puede causar rash transitorio.']},
+
+/* Antiarrítmicos y anticolinérgicos */
+{id:'amiodarona',name:'Amiodarona',grp:'arr',src:['G','P'],
+ pres:[{id:'a',lbl:'Ampolla 150 mg / 3 mL (50 mg/mL)',amt:150,u:'mg',vol:3,form:'ampolla'}],
+ sol:['SG5'],pure:true,
+ ind:[
+  {n:'Paciente estable: carga e infusión',src:'GP',t:'150–300 mg IV en 10 min; luego 1 mg/min por 6 h y 0,5 mg/min por 18 h (ACC/AHA/HRS 2015; presentación HRVT).',c:{u:'mg/min',min:0.5,max:1,def:1},b:{u:'mg',min:150,max:300,def:150,time:10}},
+  {n:'Paro cardiaco (FV / TV sin pulso)',src:'P',mx:3,t:'300 mg IV en bolo; si continúa después de la descarga eléctrica o reaparece, segunda dosis de 150 mg.',b:{u:'mg',min:150,max:300,def:300}},
+  {n:'Tormenta eléctrica, TV incesante, FA',t:'300–1.200 mg en 24 h. EM-Crit: 300 mg de carga y luego 1 mg/min por 24 h, o 300 mg en 1 h seguidos de 540 mg en 3 h. Se han reportado 2.100 mg/día.',c:{u:'mg/día',min:300,max:1200,def:900}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:6,dil:500,sol:'SG5',lbl:'6 ampollas (900 mg) + 500 mL DAD 5 % → 518 mL',note:'≈ 1,74 mg/mL (solución estándar ~1,8 mg/mL). La guía redondea el volumen a 500 mL (33 mL/h = 1 mg/min; 17 mL/h = 0,5 mg/min); con el volumen exacto son 34,5 y 17,3 mL/h.'},
+  {m:'b',p:'a',n:1,dil:100,sol:'SG5',lbl:'1 ampolla (150 mg) + 100 mL DAD 5 %, en 10 min',note:'Guía: carga a 15–30 mg/min.'},
+  {m:'b',p:'a',n:2,dil:100,sol:'SG5',lbl:'2 ampollas (300 mg) + 100 mL DAD 5 %, en 10 min',note:'Guía: carga a 15–30 mg/min.'},
+  {m:'b',p:'a',n:2,dil:0,sol:'PURA',src:'A',lbl:'Pura 50 mg/mL: bolo directo en paro',note:'La guía no describe la dilución del bolo en paro; la presentación HRVT indica 300 mg IV en bolo.'}
+ ],
+ conc:[{gt:2,u:'mg',m:'c',l:'warn',msg:'Concentración > 2 mg/mL: es aconsejable administrarla por catéter venoso central (guía).'}],
+ obs:['Cinética acumulativa (6–10 g acumulados): neumonitis intersticial/alveolar por hipersensibilidad y hepatotoxicidad potencialmente fatal (seguimiento con pruebas de función hepática).','Rango terapéutico estrecho. Concentración 1–6 mg/mL en DAD 5 %.']},
+
+{id:'lidocaina',name:'Lidocaína sin preservantes',grp:'arr',iso:'local',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 100 mg / 5 mL (20 mg/mL)',amt:100,u:'mg',vol:5,form:'ampolla'}],
+ sol:['SG5'],pure:true,
+ ind:[{n:'Arritmias ventriculares / PCR por FV o TV sin pulso refractaria',t:'Bolo 1–1,5 mg/kg; repetir 0,5–0,75 mg/kg cada 5–10 min si es necesario (dosis máxima acumulada 3 mg/kg). Administrar el bolo a 25–50 mg/min. Mantenimiento 1–4 mg/min (20–50 mcg/kg/min).',c:{u:'mg/min',min:1,max:4,def:1},b:{u:'mg/kg',min:1,max:1.5,def:1,capKg:3}}],
+ mix:[
+  {m:'c',p:'a',n:10,dil:950,sol:'SG5',lbl:'10 ampollas (1.000 mg) + 950 mL DAD 5 % → 1.000 mL',note:'1 mg/mL: 1–4 mg/min = 60–240 mL/h. (La guía escribe "1.000 mg: 10 mL"; 10 ampollas de 5 mL son 50 mL).'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 20 mg/mL (sin diluir)'}
+ ],
+ conc:[{gt:4,u:'mg',m:'c',skipPure:1,l:'warn',msg:'Supera el rango de concentración de la guía para infusión (1–4 mg/mL).'}],
+ obs:['TFG < 30 mL/min/1,73 m²: usar una velocidad de mantenimiento más baja con seguimiento estrecho de toxicidad.']},
+
+{id:'atropina',name:'Atropina',grp:'arr',iso:'anticol',src:['G'],
+ pres:[{id:'b',lbl:'Ampolla 1 mg / 1 mL',amt:1,u:'mg',vol:1,form:'ampolla',src:'C'},{id:'a',lbl:'Ampolla 0,5 mg / 1 mL',amt:0.5,u:'mg',vol:1,form:'ampolla',src:'G'}],
+ sol:['SF'],pure:true,
+ ind:[
+  {n:'Intoxicación por organofosforados o carbamatos',t:'Bolo IV: moderada 1–2 mg, severa 2–5 mg; doblar la dosis cada 3–5 min hasta que cesen las secreciones bronquiales y las sibilancias. Infusión 0,02–0,08 mg/kg/h. Los carbamatos requieren menos atropina que los organofosforados.',c:{u:'mg/kg/h',min:0.02,max:0.08,def:0.02},b:{u:'mg',min:1,max:5,def:2}},
+  {n:'Bradicardia sinusal',t:'0,5–1 mg IV o IM cada 3–5 min; dosis total máxima 3 mg. Endotraqueal: 1–2 mg cada 3–5 min.',b:{u:'mg',min:0.5,max:1,def:1}},
+  {n:'Intoxicación por hongos muscarínicos',t:'1–2 mg IV hasta la reversión de los síntomas.',b:{u:'mg',min:1,max:2,def:1}}
+ ],
+ mix:[
+  {m:'c',p:'b',n:10,dil:90,sol:'SF',src:'C',lbl:'10 ampollas de 1 mg (10 mg) + 90 mL SSN → 100 mL',note:'0,1 mg/mL, igual que la guía: 14–56 mL/h = 0,02–0,08 mg/kg/h en 70 kg. Verifique la presentación con farmacia.'},
+  {m:'b',p:'b',n:1,dil:0,sol:'PURA',src:'C',lbl:'Pura 1 mg/mL (sin diluir)'},
+  {m:'c',p:'a',n:20,dil:80,sol:'SF',lbl:'20 ampollas (10 mg) + 80 mL SSN → 100 mL',note:'0,1 mg/mL. 14–56 mL/h = 1,4–5,6 mg/h (0,02–0,08 mg/kg/h en 70 kg). (La guía escribe "100 mg: 10 mL"; 20 ampollas de 0,5 mg/mL son 10 mg en 20 mL).'},
+  {m:'c',p:'a',n:100,dil:150,sol:'SF',lbl:'100 ampollas (50 mg) + 150 mL SSN → 250 mL',note:'0,2 mg/mL. 1,4–5,6 mg/h = 7–28 mL/h (la guía escribe 35–140 mL/h, que no corresponde a esta concentración).'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 0,5 mg/mL (sin diluir)'}
+ ],
+ obs:['Usar dosis bajas en cardiopatía isquémica. No es eficaz en bloqueo AV de segundo o tercer grado.','Se han documentado dosis de hasta 760 ampollas de 1 mg en intoxicaciones.']},
+
+/* Anticoagulación y trombólisis */
+{id:'heparina',name:'Heparina no fraccionada',grp:'coag',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 25.000 UI / 5 mL (5.000 UI/mL)',amt:25000,u:'UI',vol:5,form:'frasco'}],
+ sol:['SF','SG5'],pure:true,bad:{SG10:'en DAD 10 % se reporta pérdida de potencia del 40 %'},
+ ind:[
+  {n:'Fibrilación auricular',t:'Bolo 60–80 UI/kg (máximo 5.000 UI); infusión 12–18 UI/kg/h (máximo 1.000 UI/h). Los protocolos institucionales pueden variar (ACCP).',c:{u:'UI/kg/h',min:12,max:18,def:12,capH:1000},b:{u:'UI/kg',min:60,max:80,def:60,cap:5000}},
+  {n:'SCA con elevación del ST: adjunto a fibrinólisis',t:'Bolo 60 UI/kg (máximo 4.000 UI); 12 UI/kg/h (máximo 1.000 UI/h) por ≥ 48 h o hasta la revascularización (ACCF/AHA).',c:{u:'UI/kg/h',min:12,max:12,def:12,capH:1000},b:{u:'UI/kg',min:60,max:60,def:60,cap:4000}},
+  {n:'SCA con elevación del ST: sin reperfusión',t:'Bolo 50–70 UI/kg (máximo 5.000 UI); 12 UI/kg/h por ≥ 48 h, ajustada según protocolo (Lincoff 2020).',c:{u:'UI/kg/h',min:12,max:12,def:12},b:{u:'UI/kg',min:50,max:70,def:60,cap:5000}},
+  {n:'SCA sin elevación del ST (estrategia conservadora)',t:'Bolo 60 UI/kg (máximo 5.000 UI); 12 UI/kg/h (máximo 1.000 UI/h) por 48 h o hasta estrategia invasiva (AHA/ACC).',c:{u:'UI/kg/h',min:12,max:12,def:12,capH:1000},b:{u:'UI/kg',min:60,max:60,def:60,cap:5000}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:1,dil:245,sol:'SF',lbl:'1 frasco (25.000 UI) + 245 mL SSN → 250 mL',note:'100 UI/mL. 8–13 mL/h = 12–18 UI/kg/h en 70 kg.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 5.000 UI/mL (sin diluir)'}
+ ],
+ obs:['Controlar TPT cada 6 h hasta la anticoagulación óptima: 1,5–2,5 veces el control (meta 45–90 s). Titular cada 6 h.']},
+
+{id:'protamina',name:'Protamina (sulfato)',grp:'coag',src:['G'],
+ pres:[{id:'b',lbl:'Ampolla 50 mg / 5 mL (10 mg/mL)',amt:50,u:'mg',vol:5,form:'ampolla',src:'C'},{id:'a',lbl:'Ampolla 50 mg / 10 mL (5 mg/mL)',amt:50,u:'mg',vol:10,form:'ampolla',src:'G'}],
+ sol:['SF'],pure:true,
+ ind:[{n:'Neutralización de heparina',pm:'b',t:'1 mg de protamina neutraliza ≈ 100 UI de heparina administrada. IV lenta en ≈ 10 min; dosis única máxima 50 mg (máximo 50 mg en cualquier periodo de 10 min). Si el TPT sigue elevado, repetir 0,5 mg por cada 100 UI (NCS/SCCM). Infusión 6–15 mg/h.',b:{u:'mg',min:1,max:50,def:25,time:10,cap:50},c:{u:'mg/h',min:6,max:15,def:6}}],
+ mix:[
+  {m:'b',p:'b',n:1,dil:0,sol:'PURA',src:'C',lbl:'Pura 10 mg/mL, IV lenta en 10 min'},
+  {m:'c',p:'b',n:5,dil:225,sol:'SF',src:'C',lbl:'5 ampollas de 50 mg/5 mL (250 mg) + 225 mL SSN → 250 mL',note:'1 mg/mL exacto: con esta presentación la mezcla de la guía cuadra.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 5 mg/mL, IV lenta en 10 min'},
+  {m:'c',p:'a',n:5,dil:225,sol:'SF',lbl:'5 ampollas (250 mg) + 225 mL SSN → 275 mL',note:'≈ 0,91 mg/mL. La guía indica 1 mg/mL, pero con ampollas de 10 mL el total es 275 mL; para 1 mg/mL exacto use 200 mL de diluyente.'}
+ ],
+ obs:['Puede causar hipotensión grave, colapso cardiovascular, edema pulmonar no cardiogénico, vasoconstricción pulmonar catastrófica e hipertensión pulmonar.','Meta: TPT < 40 s.']},
+
+{id:'alteplasa',name:'Alteplasa',grp:'coag',src:['G'],special:'alteplasa',
+ pres:[{id:'a',lbl:'Frasco 50 mg / 50 mL reconstituido (1 mg/mL)',amt:50,u:'mg',vol:50,form:'frasco'}],
+ sol:['SF'],
+ ind:[{n:'ACV isquémico',t:'0,9 mg/kg (máximo 90 mg): 10 % en bolo IV en 1 minuto y 90 % en infusión continua durante 60 minutos. Iniciar antes de 4,5 h desde el inicio de los síntomas.'}],
+ obs:['Más allá de 4,5 h la relación riesgo/beneficio es negativa: no se debe administrar.','Sin datos de ajuste en insuficiencia renal.','Código ictus: se despachan 2 frascos (1 kit).']},
+
+{id:'tenecteplasa',name:'Tenecteplasa',grp:'coag',src:['G'],special:'tenecteplasa',
+ pres:[{id:'a',lbl:'Frasco 50 mg (reconstituir con 10 mL de API: 5 mg/mL)',amt:50,u:'mg',vol:10,form:'frasco'}],
+ sol:['API'],
+ ind:[{n:'Infarto con elevación del ST',t:'La ICP primaria es la estrategia preferida. Si no puede realizarse en 120 min: bolo único IV en 5 segundos, según el peso. Administrar con aspirina, clopidogrel y anticoagulante (heparina no fraccionada, enoxaparina o fondaparinux).'}],
+ obs:['Aun sin ICP disponible, puede considerarse la trombólisis en presentación tardía (12–24 h) con isquemia en curso o elevación extensa del ST.','La tabla de la guía dice "60 a < 70 kg: 4 mL"; 35 mg a 5 mg/mL corresponden a 7 mL (ya corregido en el cálculo).']},
+
+{id:'estreptoquinasa',name:'Estreptoquinasa',grp:'coag',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 1.500.000 UI (reconstituir con 5 mL de SSN)',amt:1500000,u:'UI',vol:5,form:'frasco'}],
+ sol:['SF'],
+ ind:[
+  {n:'Fibrinolítico en SCA con elevación del ST',t:'1,5 millones de UI en 30–60 min.',b:{u:'UI',min:1500000,max:1500000,def:1500000,time:60}},
+  {n:'Trombólisis (embolia arterial, TVP, TEP)',t:'Carga 250.000 UI en 30 min; luego 100.000 UI/h. Embolia arterial masiva 24–72 h; TVP 72 h; TEP 24 h (72 h si es recurrente).',c:{u:'UI/h',min:100000,max:100000,def:100000},b:{u:'UI',min:250000,max:250000,def:250000,time:30}}
+ ],
+ mix:[
+  {m:'b',p:'a',n:1,dil:145,sol:'SF',lbl:'1 frasco (1.500.000 UI) + 145 mL SSN → 150 mL',note:'10.000 UI/mL. Carga en trombólisis: 25 mL (250.000 UI) en 30 min.'},
+  {m:'c',p:'a',n:1,dil:145,sol:'SF',lbl:'1 frasco (1.500.000 UI) + 145 mL SSN → 150 mL',note:'10.000 UI/mL. Mantenimiento 10 mL/h = 100.000 UI/h (la guía escribe "10.000 UI/hora").'}
+ ],
+ obs:['Evitar la agitación vigorosa del frasco para que no forme espuma.','Genera anticuerpos neutralizantes que pueden disminuir la eficacia de un uso posterior; alto riesgo de hipersensibilidad con dosis repetidas.']},
+
+/* Electrolitos */
+{id:'potasio',name:'Cloruro de potasio',grp:'elec',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 20 mEq / 10 mL (2 mEq/mL)',amt:20,u:'mEq',vol:10,form:'ampolla'}],
+ sol:['SF','SG5','SM'],
+ ind:[
+  {n:'Hipokalemia con K⁺ 2,5–3 mEq/L',t:'Inicial 10–20 mEq/h; ajustar con potasio sérico frecuente. Velocidad máxima 20 mEq/h con monitoreo ECG continuo.',c:{u:'mEq/h',min:10,max:20,def:10}},
+  {n:'Hipokalemia con K⁺ < 2,5 mEq/L',t:'Potencialmente mortal. Inicial 10–40 mEq/h; máximo por vía central 40 mEq/h con monitoreo ECG continuo. Algunos pacientes requieren hasta 400 mEq/24 h.',c:{u:'mEq/h',min:10,max:40,def:10}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:2,dil:1000,sol:'SF',lbl:'Periférica: 2 ampollas (40 mEq) + 1.000 mL SSN',note:'≈ 39 mEq/L. Guía: 20–40 mEq en 1.000 mL, pasar en 4–6 h.'},
+  {m:'c',p:'a',n:1,dil:1000,sol:'SF',lbl:'Periférica: 1 ampolla (20 mEq) + 1.000 mL SSN',note:'≈ 20 mEq/L. Guía: pasar en 4–6 h.'},
+  {m:'c',p:'a',n:1,dil:100,sol:'SF',lbl:'Central: 1 ampolla (20 mEq) + 100 mL SSN → 110 mL',note:'Solo por catéter central. Guía: pasar en 1–4 h.'}
+ ],
+ conc:[
+  {gt:0.0801,u:'mEq',l:'danger',stop:1,msg:'Concentración > 80 mEq/L: solo por vía central.'},
+  {gt:0.0401,u:'mEq',l:'warn',msg:'Vía periférica: usual hasta 40 mEq/L; 60–80 mEq/L solo de forma excepcional (arritmias, hipokalemia severa).'}
+ ],
+ rate:[
+  {gt:40,u:'mEq',l:'danger',stop:1,msg:'Supera la velocidad máxima de la guía: 40 mEq/h por vía central con monitoreo ECG.'},
+  {gt:20,u:'mEq',l:'danger',stop:1,msg:'Más de 20 mEq/h: solo por vía central y con monitoreo ECG continuo (máximo 40 mEq/h).'},
+  {gt:10,u:'mEq',l:'warn',msg:'Más de 10 mEq/h: la guía recomienda vía central y monitoreo ECG continuo.'}
+ ],
+ obs:['Nunca administrar de forma directa: siempre diluido.']},
+
+{id:'fosfato',name:'Fosfato de potasio',grp:'elec',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 15 mL (1 mmol de P/mL; la guía indica 4 mEq K⁺/mL)',amt:15,u:'mmol',vol:15,form:'frasco'}],
+ sol:['SF','SG5','SG10'],
+ ind:[
+  {n:'Hipofosfatemia: P sérico 1,8–2,5 mg/dL',t:'Fósforo 0,16–0,31 mmol/kg IV (potasio 0,23–0,46 mEq/kg); máximo 45 mmol de fósforo (66 mEq de potasio).',b:{u:'mmol/kg',min:0.16,max:0.31,def:0.16,time:360,cap:45}},
+  {n:'Hipofosfatemia: P sérico 1–1,7 mg/dL',t:'Fósforo 0,32–0,43 mmol/kg IV (potasio 0,47–0,63 mEq/kg); máximo 45 mmol.',b:{u:'mmol/kg',min:0.32,max:0.43,def:0.32,time:360,cap:45}},
+  {n:'Hipofosfatemia: P sérico < 1 mg/dL',t:'Fósforo 0,44–0,64 mmol/kg IV (potasio 0,64–0,94 mEq/kg); máximo 45 mmol.',b:{u:'mmol/kg',min:0.44,max:0.64,def:0.44,time:360,cap:45}}
+ ],
+ mix:[
+  {m:'b',p:'a',n:1,dil:250,sol:'SF',lbl:'1 frasco (15 mmol) + 250 mL → 265 mL',note:'Guía: pasar en 6 horas.'},
+  {m:'b',p:'a',n:1,dil:100,sol:'SF',lbl:'1 frasco (15 mmol) + 100 mL → 115 mL',note:'Guía: pasar en 12–24 horas.'}
+ ],
+ rate:[
+  {gt:15,u:'mmol',l:'danger',stop:1,msg:'Supera el máximo por vía central: 15 mmol/h de fósforo (22 mEq/h de potasio).'},
+  {gt:6.8,u:'mmol',l:'warn',msg:'Vía periférica: máximo 6,8 mmol/h de fósforo (10 mEq/h de potasio). Por encima, use vía central.'}
+ ],
+ obs:['La velocidad de infusión del potasio no debe exceder 0,5–1 mEq/kg/h.','Precaución en hipercalcemia y cuando el potasio está elevado: enfermedad de Addison, deshidratación aguda, pancreatitis, insuficiencia renal grave, rabdomiólisis, quemaduras graves.','Verifique en la etiqueta del producto disponible el contenido de fósforo y de potasio por mL.']},
+
+{id:'sodio3',name:'Cloruro de sodio 3 %',grp:'elec',src:['G'],special:'sodio',
+ pres:[{id:'a',lbl:'Se prepara a partir de NaCl 4 M (23,4 %) y SSN 0,9 %',amt:1,u:'mEq',vol:1,form:'mL'}],
+ sol:['SF'],
+ ind:[{n:'Hiponatremia aguda o grave',t:'Asintomática (< 130): bolo de 50 mL en ≥ 5 min. Sintomática: 100 mL en 10 min, repetible hasta 3 dosis en 30 min; alternativa 150 mL en 20 min hasta 2 dosis. Grave (< 120): 15–30 mL/h, o bolo de 1 mL/kg (máximo 100 mL) en 10 min cada 6 h según necesidad (Sterns 2021).'}],
+ obs:['Concentraciones > 2 %: se recomienda vía central por la osmolaridad; en ausencia de CVC y ante urgencia, el 3 % puede pasarse de forma segura por vía periférica. Concentraciones > 3 % solo por vía central.','Monitorear el sodio sérico cada 1–2 h. Considerar desmopresina para prevenir la sobrecorrección en pacientes con alto riesgo de desmielinización osmótica.','NaCl 3 %: osmolaridad 1.027 mOsm/L; sodio 513 mEq/L.']},
+
+/* Gastrointestinal, endocrino y otros */
+{id:'omeprazol',name:'Omeprazol',grp:'gi',src:['P'],stab:{SF:12,SG5:6},
+ pres:[{id:'a',lbl:'Vial 40 mg polvo liofilizado (reconstituir con 5 mL)',amt:40,u:'mg',vol:5,form:'vial'}],
+ sol:['SF','SG5'],
+ ind:[{n:'Hemorragia de vías digestivas altas',src:'P',t:'Carga 80 mg IV en 30 min; mantenimiento 8 mg/h en infusión continua (usualmente 24–72 h). Otras indicaciones: dispepsia funcional, erradicación de H. pylori y profilaxis de úlceras por estrés en pacientes críticos.',b:{u:'mg',min:80,max:80,def:80,time:30},c:{u:'mg/h',min:8,max:8,def:8}}],
+ mix:[
+  {m:'b',p:'a',n:2,dil:100,sol:'SF',src:'A',lbl:'2 viales (80 mg) + 100 mL SSN → 110 mL',note:'Igual al esquema de la guía para esomeprazol. Pasar en 30 min.'},
+  {m:'c',p:'a',n:2,dil:100,sol:'SF',src:'A',lbl:'2 viales (80 mg) + 100 mL SSN → 110 mL',note:'≈ 0,73 mg/mL: 8 mg/h ≈ 11 mL/h.'},
+  {m:'c',p:'a',n:2,dil:70,sol:'SF',src:'A',lbl:'2 viales (80 mg) + 70 mL SSN → 80 mL (1 mg/mL)',note:'Con 1 mg/mL, 8 mg/h = 8 mL/h.'}
+ ],
+ obs:['Estabilidad de la mezcla: 12 h en SSN y 6 h en DAD 5 %.','Tras la endoscopia, con estigmas de alto riesgo de sangrado: infusión continua de IBP por al menos 72 h antes de pasar a vía oral (ACG 2021).']},
+
+{id:'esomeprazol',name:'Esomeprazol',grp:'gi',src:['G'],stab:{SF:12,SG5:6},
+ pres:[{id:'a',lbl:'Vial 40 mg (reconstituir con 5 mL de SSN: 8 mg/mL)',amt:40,u:'mg',vol:5,form:'vial'}],
+ sol:['SF','SG5'],
+ ind:[{n:'Prevención de resangrado digestivo alto',t:'Carga de 80 mg en 30 min; luego infusión continua de 8 mg/h por un total de 72 h.',b:{u:'mg',min:80,max:80,def:80,time:30},c:{u:'mg/h',min:8,max:8,def:8}}],
+ mix:[
+  {m:'b',p:'a',n:2,dil:100,sol:'SF',lbl:'2 viales (80 mg) + 100 mL SSN → 110 mL',note:'Pasar en 30 min (guía).'},
+  {m:'c',p:'a',n:2,dil:100,sol:'SF',lbl:'Misma solución: 2 viales + 100 mL SSN → 110 mL',note:'≈ 0,73 mg/mL: 8 mg/h ≈ 11 mL/h. La guía escribe "8 mg/h (8 mL/hora)", que solo es exacto con 1 mg/mL (ver la mezcla siguiente).'},
+  {m:'c',p:'a',n:2,dil:70,sol:'SF',src:'A',lbl:'2 viales (80 mg) + 70 mL SSN → 80 mL (1 mg/mL)',note:'Con 1 mg/mL, 8 mg/h = 8 mL/h, como indica la guía.'}
+ ],
+ obs:['Estabilidad: 12 h en SSN y 6 h en DAD 5 %.','Tras la endoscopia, con estigmas de alto riesgo: infusión continua de IBP por al menos 72 h antes de pasar a vía oral (ACG 2021). Sin estigmas de alto riesgo, puede pasar a IBP oral de inmediato.']},
+
+{id:'insulina',name:'Insulina simple (regular)',grp:'gi',src:['G'],
+ pres:[{id:'a',lbl:'Vial 100 UI/mL (la cantidad se escribe en mL)',amt:100,u:'UI',vol:1,form:'mL'}],
+ sol:['SF','SG5','SG10'],
+ ind:[
+  {n:'Cetoacidosis diabética / estado hiperosmolar',t:'Bolo opcional 0,1 UI/kg. Infusión: 0,1 UI/kg/h si se dio bolo; 0,14 UI/kg/h si no. Duplicar cada hora si la glucosa no baja 50–75 mg/dL en la primera hora. Cuando la glucosa se acerca a 200–250 mg/dL (CAD) o 250–300 mg/dL (EHH), reducir a 0,02–0,05 UI/kg/h.',c:{u:'UI/kg/h',min:0.02,max:0.14,def:0.1},b:{u:'UI/kg',min:0.1,max:0.1,def:0.1}},
+  {n:'Hiperglucemia en paciente crítico',t:'100 UI de insulina simple en 100 mL de SSN; iniciar a 2–3 mL/h (2–3 UI/h) y titular según la meta de glucemia (< 180 mg/dL), evitando hipoglucemia (≤ 70 mg/dL, o < 100 mg/dL en pacientes neurológicos).',c:{u:'UI/h',def:2}}
+ ],
+ mix:[{m:'c',p:'a',n:1,dil:99,sol:'SF',lbl:'100 UI (1 mL) + 99 mL SSN → 100 mL',note:'1 UI/mL (en la práctica: "100 UI en 100 mL"). 0,1 UI/kg/h = 7 mL/h y 0,14 UI/kg/h = 9,8 mL/h en 70 kg.'}],
+ obs:['Objetivo: glucemia < 180 mg/dL mediante un protocolo con baja tasa de hipoglucemia.']},
+
+{id:'furosemida',name:'Furosemida',grp:'gi',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 20 mg / 2 mL (10 mg/mL)',amt:20,u:'mg',vol:2,form:'ampolla'}],
+ sol:['SF','SG5'],pure:true,
+ ind:[
+  {n:'Edema refractario con TFG ≥ 30 mL/min/1,73 m²',t:'Inicial 5 mg/h; si la respuesta diurética no es adecuada, repetir el bolo IV y subir a 10 mg/h; continuar bolos y titular hasta 40 mg/h (Brater 2011; 2020). Máximo 5–6 mg/kg en 24 h.',c:{u:'mg/h',min:5,max:40,def:5}},
+  {n:'Edema refractario con TFG < 30 mL/min/1,73 m²',t:'Inicial 20 mg/h; si la respuesta no es adecuada, repetir el bolo IV y subir a 40 mg/h (Brater 2011; 2020). Máximo 5–6 mg/kg en 24 h.',c:{u:'mg/h',min:20,max:40,def:20}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:10,dil:80,sol:'SF',lbl:'10 ampollas (200 mg) + 80 mL SSN → 100 mL',note:'2 mg/mL: 5 mL/h = 10 mg/h; 20 mL/h = 40 mg/h. (La guía rotula "20 mg/mL"; su mezcla corresponde a ampollas de 20 mg/2 mL).'},
+  {m:'c',p:'a',n:10,dil:0,sol:'PURA',lbl:'10 ampollas puras (200 mg) → 20 mL',note:'10 mg/mL, el máximo permitido para administración directa.'}
+ ],
+ dayKg:{gt:6,u:'mg',msg:'La dosis en 24 h supera el máximo de 5–6 mg/kg/24 h que cita la guía'},
+ obs:['El efecto dura ≈ 6 h ("Lasix: last six hours"). Se han reportado macrodosis de 6 g/día.','La infusión produce una natriuresis más balanceada que los bolos; los bolos pueden generar resistencia (hiperaldosteronismo secundario): considerar espironolactona si no hay hiperkalemia.','Si se administra IV directo, la concentración no debe exceder 10 mg/mL.']},
+
+{id:'hidrocortisona',name:'Hidrocortisona',grp:'gi',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 100 mg (reconstituido en 2 mL: 50 mg/mL)',amt:100,u:'mg',vol:2,form:'frasco'}],
+ sol:['SF','SG5','SG10','SM'],pure:true,
+ ind:[{n:'Choque séptico',t:'Solo en choque que no responde a volumen y vasopresores (SCCM/ESICM): 50 mg IV cada 6 h (sola o con fludrocortisona) o 200 mg/día (8,5 mg/h) en infusión continua, por ≥ 3 días. Rango 5–10 mg/h. Esquema de la guía: 100 mg en 20 min; luego 10 mg/h por 24 h; 5 mg/h por 24 h; 20 mg cada 8 h × 3 dosis; 10 mg cada 8 h × 3 dosis.',c:{u:'mg/h',min:5,max:10,def:8.5},b:{u:'mg',min:50,max:100,def:50}}],
+ mix:[
+  {m:'c',p:'a',n:1,dil:248,sol:'SF',src:'A',lbl:'1 frasco (100 mg) + 248 mL SSN → 250 mL',note:'0,4 mg/mL: 21,2 mL/h = 8,5 mg/h. (La guía describe reconstituir con 2,5 mL de API "para hacer 7,5 mL" y diluir en 243 mL; aquí se ajusta a 250 mL exactos).'},
+  {m:'c',p:'a',n:1,dil:98,sol:'SF',src:'A',lbl:'1 frasco (100 mg) + 98 mL SSN → 100 mL',note:'1 mg/mL: 8,5 mL/h = 8,5 mg/h.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',lbl:'Pura 50 mg/mL (bolo en ≥ 30 s)'}
+ ],
+ obs:['También se usa en el síndrome de respuesta inflamatoria con vasoplejia post-circulación extracorpórea.','Dosis bajas se asocian con hiperglucemia e hipernatremia.','Bolo IV sin diluir en ≥ 30 s; dosis grandes (≥ 500 mg) en 10 min. Intermitente: diluir y pasar en 20–30 min.']},
+
+{id:'hierro',name:'Hierro dextrán',grp:'gi',src:['G'],special:'hierro',
+ pres:[{id:'a',lbl:'Ampolla 100 mg / 2 mL (50 mg/mL)',amt:100,u:'mg',vol:2,form:'ampolla'}],
+ sol:['SF'],bad:{SG5:'nunca diluir en DAD 5 %: más dolor local y flebitis'},
+ ind:[{n:'Anemia ferropénica: dosis total',t:'Dosis (mL) = 0,0442 × (Hb deseada − Hb observada) × peso magro + 0,26 × peso magro. Hb deseada: 12 g/dL si ≤ 15 kg; 14,8 g/dL si > 15 kg. Diluir la dosis total en 250–1.000 mL de SSN, pasar en 1 h y hacer prueba pasando 5 mL.'}],
+ obs:['Solo si está autorizada la administración IV del hierro dextrán.']},
+
+/* Antiinfecciosos */
+{id:'vancomicina',name:'Vancomicina',grp:'infx',src:['G'],stab:4,
+ pres:[{id:'a',lbl:'Frasco 500 mg (reconstituir con 10 mL de agua estéril: 50 mg/mL)',amt:500,u:'mg',vol:10,form:'frasco'}],
+ sol:['SF'],
+ ind:[{n:'Infecciones susceptibles',pm:'b',t:'3 g/día (no usar más de 4 g de forma empírica); ajustar según el PROA, niveles y función renal. Valle 5–10 mcg/mL; terapéutico 20–40 mcg/mL; ototóxico/nefrotóxico 80–100 mcg/mL (según la guía).',b:{u:'mg',min:500,max:500,def:500,time:240},c:{u:'g/día',min:3,max:4,def:3}}],
+ mix:[
+  {m:'b',p:'a',n:1,dil:90,sol:'SF',lbl:'1 frasco (500 mg) + 90 mL SSN → 100 mL',note:'5 mg/mL. Pasar los 100 mL en 4 h = 25 mL/h; recambiar cada 4 h (6 bolsas en 24 h = 3 g).'},
+  {m:'c',p:'a',n:1,dil:90,sol:'SF',lbl:'1 frasco (500 mg) + 90 mL SSN → 100 mL, recambio cada 4 h',note:'5 mg/mL. 3 g/día = 25 mL/h. La solución es estable 4 h, por eso se recambia la bolsa cada 4 h.'}
+ ],
+ obs:['Estabilidad de la solución: 4 h a temperatura ambiente según el fabricante; con esta presentación la infusión continua se hace como bolsas intermitentes de 4 h.','Las infusiones continuas se relacionan con mayor eficacia (según su cinética) y menor daño renal.']},
+
+{id:'anfotericina',name:'Anfotericina B deoxicolato',grp:'infx',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 50 mg (reconstituir con 10 mL de API: 5 mg/mL)',amt:50,u:'mg',vol:10,form:'frasco'}],
+ sol:['SG5'],bad:{SF:'precipita en SSN'},
+ ind:[{n:'Micosis sistémicas',t:'0,25–0,5 mg/kg/día; aumentar hasta 1 mg/kg/día (máximo 1,5 mg/kg/día). Dosis de prueba: 1 mg en 20 mL de DAD 5 % en 20–30 min.',b:{u:'mg/kg',min:0.25,max:1,def:0.5,time:360,hard:1.5}}],
+ mix:[
+  {m:'b',p:'a',n:1,dil:500,sol:'SG5',lbl:'1 frasco (50 mg) + 500 mL DAD 5 % → 510 mL',note:'≈ 0,1 mg/mL. Guía: pasar en 6 h (83 mL/h).'},
+  {m:'b',p:'a',n:0.5,dil:245,sol:'SG5',lbl:'½ frasco (25 mg, 5 mL) + 245 mL DAD 5 % → 250 mL',note:'0,1 mg/mL. Guía: pasar en 6 h (42 mL/h).'}
+ ],
+ obs:['Fotosensible: requiere protección de la luz.','Compatible con cantidades limitadas de heparina e hidrocortisona.','Reconstituir con agua estéril (API).']},
+
+/* Antídotos y toxicología */
+{id:'naloxona',name:'Naloxona',grp:'tox',iso:'antiopi',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 0,4 mg / 1 mL',amt:0.4,u:'mg',vol:1,form:'ampolla'}],
+ sol:['SF','SG5'],pure:true,
+ ind:[{n:'Intoxicación por opioides',t:'IV, IM o SC: 0,4–2 mg; puede repetirse cada 2–3 min. En dependencia de opioides iniciar con 0,1–0,2 mg. Infusión para opioides de acción prolongada (metadona): 0,25–6,25 mg/h (las mezclas de la guía usan 100–400 mcg/h).',b:{u:'mg',min:0.1,max:2,def:0.4},c:{u:'mcg/h',min:100,max:6250,def:100}}],
+ mix:[
+  {m:'b',p:'a',n:1,dil:7,sol:'SF',lbl:'1 ampolla (0,4 mg) + 7 mL SSN → 8 mL (50 mcg/mL)',note:'Aplicar 2 mL STAT y repetir hasta respuesta. Máximo 400 mcg (8 mL).'},
+  {m:'c',p:'a',n:5,dil:500,sol:'SG5',lbl:'5 ampollas (2 mg) + 500 mL DAD 5 % → 505 mL',note:'≈ 4 mcg/mL: 100–400 mcg/h = 25–100 mL/h. (La tabla de la guía dice 400 mcg/mL; el cálculo exacto es ≈ 4 mcg/mL).'}
+ ],
+ obs:['Una reversión demasiado rápida puede causar abstinencia aguda, hipertensión, arritmias, edema pulmonar y paro cardiaco.','Si no hay respuesta a los bolos iniciales, continuar con infusión.']},
+
+{id:'pralidoxima',name:'Pralidoxima',grp:'tox',src:['G'],
+ pres:[{id:'a',lbl:'Frasco 200 mg / 10 mL (20 mg/mL): corroborar presentación',amt:200,u:'mg',vol:10,form:'frasco'}],
+ sol:['SF'],
+ ind:[{n:'Intoxicación grave por organofosforados o carbamatos',t:'Bolo 1–2 g (30 mg/kg) en 30 min, puede repetirse; luego 8–10 mg/kg/h. Vía IM si no hay acceso venoso: 600 mg × 3 dosis (1.800 mg).',b:{u:'g',min:1,max:2,def:2,time:30},c:{u:'mg/kg/h',min:8,max:10,def:8}}],
+ mix:[
+  {m:'b',p:'a',n:10,dil:100,sol:'SF',lbl:'10 frascos (2 g, 100 mL) + 100 mL SSN → 200 mL',note:'10 mg/mL. Guía: pasar en 15–30 min.'},
+  {m:'c',p:'a',n:10,dil:100,sol:'SF',lbl:'10 frascos (2 g, 100 mL) + 100 mL SSN → 200 mL',note:'10 mg/mL. La guía pide corroborar la presentación y su tabla indica 50 mg/mL: verifique la disponible.'}
+ ],
+ obs:['Uso controversial: metaanálisis recientes no han demostrado beneficio adicional.']},
+
+{id:'etanol',name:'Etanol (vía enteral)',grp:'tox',src:['G'],route:'Vía enteral por sonda (gastroclisis)',
+ pres:[{id:'a',lbl:'Etanol 40 % v/v preparado por farmacia (≈ 320 mg/mL)',amt:320,u:'mg',vol:1,form:'mL'}],
+ sol:['JUGO','SG5','SG10'],
+ ind:[{n:'Intoxicación por metanol o etilenglicol',t:'Carga 800 mg/kg (≈ 2,5 mL/kg de etanol 40 %) en 60 min; mantenimiento 100 mg/kg/h (≈ 0,3 mL/kg/h de etanol 40 %) hasta 72 h según evolución. Diluir en igual volumen de jugo o DAD 5–10 % (solución final ≈ 20 %) y pasar por sonda nasogástrica.',b:{u:'mg/kg',min:800,max:800,def:800,time:60},c:{u:'mg/kg/h',min:100,max:100,def:100}}],
+ mix:[
+  {m:'b',p:'a',n:175,dil:175,sol:'JUGO',lbl:'175 mL de etanol 40 % + 175 mL de jugo → 350 mL',note:'Carga para 70 kg, en 60 min.'},
+  {m:'c',p:'a',n:500,dil:500,sol:'JUGO',lbl:'500 mL de etanol 40 % + 500 mL de jugo → 1.000 mL (≈ 20 %)',note:'≈ 160 mg/mL. Guía: 42 mL/h en 70 kg.'}
+ ],
+ obs:['320 mg/mL: equivalencia de la guía (2,5 mL/kg de etanol 40 % = 800 mg/kg). Por densidad (0,789 g/mL) el valor teórico es 316 mg/mL.','Farmacia diluye el etanol al 96 % a 40 % v/v; se diluye de nuevo en igual volumen para evitar toxicidad gastrointestinal.','Sin etanol disponible pueden usarse licores de 30–40 % v/v (vodka, aguardiente). La dosis se afecta por etilismo agudo o crónico.']},
+
+{id:'azul',name:'Azul de metileno',grp:'tox',src:['G'],
+ pres:[{id:'a',lbl:'Ampolla 100 mg / 10 mL (10 mg/mL)',amt:100,u:'mg',vol:10,form:'ampolla'}],
+ sol:['SF','SG5'],
+ solNote:{SF:'La ficha técnica del azul de metileno (ProvayBlue®, FDA) recomienda diluir en DAD 5 % y evitar soluciones con cloruro, que disminuyen su solubilidad. La guía indica NaCl 0,9 %: confirme con farmacia.'},
+ ind:[
+  {n:'Metahemoglobinemia adquirida o por fármacos',t:'1–2 mg/kg IV (25–50 mg/m²) en 5–60 min. Dar una segunda dosis si hay respuesta tórpida (metahemoglobina > 30 %).',b:{u:'mg/kg',min:1,max:2,def:1,time:30}},
+  {n:'Vasoplejia asociada a cirugía cardiaca',t:'1,5–2 mg/kg en 20–60 min, una vez; se han usado infusiones de 0,25–2 mg/kg/h (el esquema debe ser validado).',b:{u:'mg/kg',min:1.5,max:2,def:1.5,time:20},c:{u:'mg/kg/h',min:0.25,max:2,def:0.25}}
+ ],
+ mix:[
+  {m:'b',p:'a',n:1,dil:250,sol:'SF',lbl:'1 ampolla (100 mg) + 250 mL NaCl 0,9 % → 260 mL',note:'Mezcla de la guía. Pasar en 5–60 min.'},
+  {m:'b',p:'a',n:1,dil:50,sol:'SG5',src:'F',lbl:'1 ampolla (100 mg) + 50 mL DAD 5 % → 60 mL',note:'Dilución de la ficha técnica (ProvayBlue®).'}
+ ],
+ obs:['Inhibe la vasodilatación mediada por óxido nítrico.']},
+/* Agregados con aprobación del usuario (fuentes externas) */
+{id:'vasopresina',name:'Vasopresina',grp:'vaso',iso:'vaso',src:[],ext:'Surviving Sepsis Campaign 2021 · ficha técnica',stab:18,
+ pres:[{id:'a',lbl:'Ampolla 20 UI / 1 mL',amt:20,u:'UI',vol:1,form:'ampolla',src:'C'}],
+ sol:['SF','SG5'],
+ ind:[{n:'Choque séptico: segundo vasopresor',t:'Agregar a la norepinefrina cuando esta llega a 0,25–0,5 mcg/kg/min, en lugar de seguir aumentándola (SSC 2021). Dosis usual fija de 0,03 UI/min; dosis mayores de 0,03–0,04 UI/min solo como rescate. Ficha técnica: iniciar 0,01 UI/min y titular 0,005 UI/min cada 10–15 min; máximo 0,07 UI/min.',c:{u:'UI/min',min:0.01,max:0.04,def:0.03,hard:0.07}}],
+ mix:[
+  {m:'c',p:'a',n:1,dil:199,sol:'SF',src:'F',lbl:'1 ampolla (20 UI) + 199 mL SSN → 200 mL (0,1 UI/mL)',note:'Concentración de la ficha técnica. 0,03 UI/min = 18 mL/h.'},
+  {m:'c',p:'a',n:1,dil:19,sol:'SF',src:'F',lbl:'1 ampolla (20 UI) + 19 mL SSN → 20 mL (1 UI/mL)',note:'Concentración de la ficha técnica para restricción de líquidos (bomba de jeringa). 0,03 UI/min = 1,8 mL/h.'}
+ ],
+ obs:['Suele dejarse a dosis fija (0,03 UI/min); no se titula como la norepinefrina.','Riesgo de isquemia digital, mesentérica y miocárdica, e hiponatremia.','Solución diluida: estable 18 h a temperatura ambiente o 24 h refrigerada (ficha técnica). Retiro gradual según tolerancia hemodinámica.']},
+
+{id:'magnesio',name:'Sulfato de magnesio 20 %',grp:'elec',src:['G'],ext:'GPC MinSalud trastornos hipertensivos del embarazo · AHA · GINA',
+ pres:[{id:'a',lbl:'Ampolla 2 g / 10 mL (20 %: 200 mg/mL)',amt:2,u:'g',vol:10,form:'ampolla',src:'C'}],
+ sol:['SF','SG5'],
+ ind:[
+  {n:'Preeclampsia severa / eclampsia',pm:'b',t:'Esquema de Zuspan: carga de 4 g IV en 15–20 min; mantenimiento 1 g/h por 24 h (GPC MinSalud Colombia; ajustar al protocolo institucional). Si la convulsión recurre, bolo adicional de 2 g.',b:{u:'g',min:4,max:4,def:4,time:20},c:{u:'g/h',min:1,max:2,def:1}},
+  {n:'Hipomagnesemia (anexo de la guía)',src:'G',pm:'b',t:'Mg 1,3–1,9 mg/dL: 4 g IV en 4 h (control con los laboratorios de la mañana). Mg ≤ 1,2 mg/dL: 8 g IV en 8 h (control 6 h después). Bolsas de 4 g/100 mL a 1 g/h.',b:{u:'g',min:4,max:8,def:4,time:240},c:{u:'g/h',min:1,max:1,def:1}},
+  {n:'Torsades de pointes',t:'1–2 g IV diluidos en 5–20 min (AHA); en paro sin pulso, en bolo.',b:{u:'g',min:1,max:2,def:2,time:15}},
+  {n:'Asma grave sin respuesta al manejo inicial',t:'2 g IV en 20 min, dosis única (GINA).',b:{u:'g',min:2,max:2,def:2,time:20}}
+ ],
+ mix:[
+  {m:'b',p:'a',n:2,dil:80,sol:'SF',lbl:'2 ampollas (4 g) + 80 mL SSN → 100 mL (4 g/100 mL)',note:'Bolsa de 4 g/100 mL del anexo de la guía (40 mg/mL). Sirve también para la carga de 4 g del esquema de Zuspan.'},
+  {m:'c',p:'a',n:5,dil:450,sol:'SF',src:'C',lbl:'5 ampollas (10 g) + 450 mL SSN → 500 mL',note:'20 mg/mL: 1 g/h = 50 mL/h. Mezcla habitual en protocolos obstétricos colombianos.'},
+  {m:'c',p:'a',n:2,dil:80,sol:'SF',lbl:'2 ampollas (4 g) + 80 mL SSN → 100 mL (4 g/100 mL)',note:'Anexo de la guía: infundir a 1 g/h = 25 mL/h.'}
+ ],
+ obs:['Suspender si desaparece el reflejo patelar, la frecuencia respiratoria es < 12/min o la diuresis es < 30 mL/h.','Antídoto: gluconato de calcio al 10 %, 1 g IV lento.','Precaución en insuficiencia renal: riesgo de hipermagnesemia.']},
+
+{id:'labetalol',name:'Labetalol',grp:'vasod',iso:'hipo',src:[],ext:'Guía ACC/AHA 2017 de hipertensión · ficha técnica',cumMax:{v:300,u:'mg'},
+ pres:[{id:'a',lbl:'Ampolla 100 mg / 20 mL (5 mg/mL)',amt:100,u:'mg',vol:20,form:'ampolla',src:'C'}],
+ sol:['SF','SG5'],pure:true,
+ ind:[
+  {n:'Emergencia hipertensiva',t:'Bolo 0,3–1 mg/kg (máximo 20 mg) IV lento cada 10 min, o infusión de 0,4–1 mg/kg/h hasta 3 mg/kg/h; dosis acumulada máxima 300 mg, repetible cada 4–6 h (ACC/AHA 2017). Ficha técnica: 20 mg IV en 2 min y luego 40–80 mg cada 10 min, o infusión de 2 mg/min.',c:{u:'mg/kg/h',min:0.4,max:3,def:0.4},b:{u:'mg/kg',min:0.3,max:1,def:0.3,time:2,cap:20}},
+  {n:'Disección aórtica aguda',t:'Betabloqueador IV antes que cualquier vasodilatador; meta de PAS < 120 mmHg en la primera hora (ACC/AHA 2017). Mismas dosis que en la emergencia hipertensiva.',c:{u:'mg/kg/h',min:0.4,max:3,def:0.4},b:{u:'mg/kg',min:0.3,max:1,def:0.3,time:2,cap:20}}
+ ],
+ mix:[
+  {m:'c',p:'a',n:2,dil:160,sol:'SF',src:'F',lbl:'2 ampollas (200 mg, 40 mL) + 160 mL SSN → 200 mL (1 mg/mL)',note:'Dilución de la ficha técnica.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',src:'F',lbl:'Pura 5 mg/mL, IV lenta en 2 min'}
+ ],
+ obs:['Contraindicado en asma o EPOC con broncoespasmo, bradicardia, bloqueo AV de 2.º–3.er grado, falla cardiaca descompensada y choque cardiogénico.','Incompatible con bicarbonato de sodio (precipita).','Mantener al paciente acostado durante la administración y verificar la tolerancia antes de levantarlo (hipotensión postural).']},
+
+{id:'esmolol',name:'Esmolol',grp:'vasod',iso:'hipo',src:[],ext:'Guía ACC/AHA 2017 de hipertensión · ficha técnica',
+ pres:[{id:'a',lbl:'Vial 100 mg / 10 mL (10 mg/mL, listo para usar)',amt:100,u:'mg',vol:10,form:'vial',src:'C'}],
+ sol:[],pure:true,
+ ind:[{n:'Emergencia hipertensiva / disección aórtica',t:'Carga de 500–1.000 mcg/kg en 1 min; luego 50 mcg/kg/min. Si se requiere más, repetir la carga y aumentar de a 50 mcg/kg/min hasta un máximo de 200 mcg/kg/min (ACC/AHA 2017). En disección aórtica: meta de PAS < 120 mmHg en la primera hora.',c:{u:'mcg/kg/min',min:50,max:200,def:50,hard:300},b:{u:'mcg/kg',min:500,max:1000,def:500,time:1}}],
+ mix:[
+  {m:'c',p:'a',n:5,dil:0,sol:'PURA',src:'F',lbl:'5 viales puros (500 mg) → 50 mL en jeringa',note:'10 mg/mL, listo para usar (ficha técnica): no requiere dilución. 50 mcg/kg/min = 21 mL/h en 70 kg.'},
+  {m:'b',p:'a',n:1,dil:0,sol:'PURA',src:'F',lbl:'Puro 10 mg/mL'}
+ ],
+ obs:['Vida media ≈ 9 min: el efecto desaparece 10–30 min después de suspenderlo.','Contraindicado en bradicardia, bloqueo AV de 2.º–3.er grado, falla cardiaca descompensada, choque cardiogénico y broncoespasmo.','Concentraciones > 10 mg/mL aumentan el riesgo de flebitis. Por el volumen que requiere (≈ 2 viales por hora en 70 kg), confirme el inventario con farmacia.']}
+];
+
+/* ───────────── Estado ───────────── */
+const S={drug:'noradrenalina',ind:0,mode:'c',pres:'a',n:'4',dil:'234',sol:'SG5',dose:'0,1',unit:'mcg/kg/min',time:'',rev:'',wt:'70',wtEx:true,
+  cName:'',cAmt:'',cU:'mg',cVol:'',steps:false,tab:false,tFrom:'',tTo:'',tStep:'',list:[],clearArm:false,addFlash:false,
+  sp:{hierro:{hbo:'8',hbd:'',lbw:'',dil:'250',time:'60'},sodio:{conc:'23,4',vf:'1000',tgt:'3',esq:'grave',v:'1',u:'mL/kg',t:'10'}}};
+
+/* ───────────── Utilidades ───────────── */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function num(v){if(v==null)return NaN;let s=String(v).trim().replace(/\s+/g,'');if(!s)return NaN;
+  if(/^[1-9]\d{0,2}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');else if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');
+  return Number(s);}
+const NFC={};
+function fmt(x,d){if(!isFinite(x))return '—';NFC[d]=NFC[d]||new Intl.NumberFormat('es-CO',{maximumFractionDigits:d});return NFC[d].format(x);}
+function sm(x){if(!isFinite(x))return '—';const a=Math.abs(x);const d=a>=1000?0:a>=100?1:a>=1?2:a>=0.1?3:a>=0.01?4:5;return fmt(x,d);}
+function rt(x){return fmt(x,Math.abs(x)<1?2:1);}
+function vol(x){return fmt(x,Math.abs(x)<10?2:1);}
+const fin=x=>String(x).replace('.',',');
+const r10=x=>Number(x.toPrecision(10));
+function nice(x){if(!(x>0))return 1;const b=Math.pow(10,Math.floor(Math.log10(x)));return [1,2,2.5,5,10].map(m=>m*b).reduce((a,v)=>Math.abs(v-x)<Math.abs(a-x)?v:a);}
+function durTxt(h){if(!isFinite(h))return '—';const m=Math.round(h*60);if(m<60)return `${m} min`;const hh=Math.floor(m/60),mm=m%60;return mm?`${hh} h ${mm} min`:`${hh} h`;}
+function clockTxt(h){const t=new Date(Date.now()+h*3600e3),now=new Date();const s=t.toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit'});const days=Math.round((new Date(t.toDateString())-new Date(now.toDateString()))/864e5);return days===0?`a las ${s}`:days===1?`mañana a las ${s}`:`en ${days} días, a las ${s}`;}
+function plural(form,n){const one=Math.abs(n-1)<1e-9;return form==='mL'?'mL':form==='vial'?(one?'vial':'viales'):form+(one?'':'s');}
+function amtTxt(base,cat){if(cat==='mass')return base>=1000?`${sm(base/1000)} mg`:`${sm(base)} mcg`;return `${sm(base)} ${cat}`;}
+function concTxt(c,cat){if(cat==='mass')return c>=1000?`${sm(c/1000)} mg/mL`:`${sm(c)} mcg/mL`;if(cat==='mEq'||cat==='mmol')return `${sm(c)} ${cat}/mL (${sm(c*1000)} ${cat}/L)`;return `${sm(c)} ${cat}/mL`;}
+function convNote(a,b){const r=AMT[a].f/AMT[b].f;return r>=1?`Conversión: 1 ${a} = ${sm(r)} ${b}`:`Conversión: 1 ${b} = ${sm(1/r)} ${a}`;}
+
+/* ───────────── Modelo ───────────── */
+function customDrug(){const cat=AMT[S.cU].c;return{id:'otro',custom:true,name:S.cName.trim()||'Medicamento no listado',grp:'otro',src:[],pres:[],
+  sol:['SF','SG5','SG10','SM','API'],pure:true,
+  ind:[{n:'Dosis indicada por el médico tratante',t:'Escriba la presentación, la mezcla y la dosis. Verifique compatibilidad y estabilidad con farmacia o la ficha técnica.',c:{u:DEF_C[cat]},b:{u:DEF_B[cat]}}],mix:[],obs:[]};}
+function drug(){return S.drug==='otro'?customDrug():DRUGS.find(d=>d.id===S.drug);}
+function indOf(d){return d.ind[S.ind]||d.ind[0];}
+function presOf(d){if(d.custom||S.pres==='custom')return{id:'custom',amt:num(S.cAmt),u:S.cU,vol:num(S.cVol),form:'ampolla',lbl:'Presentación personalizada'};return d.pres.find(p=>p.id===S.pres)||d.pres[0];}
+function catOf(d){return AMT[presOf(d).u].c;}
+function unitList(d){return (S.mode==='c'?CONT_U:BOLO_U)[catOf(d)];}
+
+function applyMix(mx){S.pres=mx.p;S.n=fin(mx.n);S.sol=mx.sol;S.dil=mx.sol==='PURA'?'':fin(mx.dil);}
+function applyDefaults(withMix){
+  const d=drug(),i=indOf(d);
+  if(withMix&&!d.custom){
+    const pref=i.mx!=null&&d.mix[i.mx]&&d.mix[i.mx].m===S.mode?d.mix[i.mx]:null;
+    const mx=pref||(d.mix||[]).find(m=>m.m===S.mode)||(d.mix||[])[0];
+    if(mx)applyMix(mx);else{S.n='1';if(d.pure){S.sol='PURA';S.dil='';}else{S.sol=d.sol[0];S.dil='100';}}
+  }
+  const spec=i[S.mode]||{};const list=unitList(d);
+  S.unit=spec.u&&list.includes(spec.u)?spec.u:list[0];
+  S.dose=spec.def!=null?fin(spec.def):'';
+  S.time=spec.time!=null?fin(spec.time):'';
+  S.rev='';S.tFrom=S.tTo=S.tStep='';
+}
+function selectDrug(id){
+  S.drug=id;S.ind=0;
+  const d=drug();
+  if(d.custom){S.pres='custom';if(!S.cAmt){S.n='1';S.dil='100';S.sol='SF';}if(S.sol==='JUGO')S.sol='SF';}
+  else S.pres=d.pres[0].id;
+  const i=indOf(d);S.mode=i.pm&&i[i.pm]?i.pm:(i.c?'c':'b');
+  if(!d.special)applyDefaults(true);
+  renderAll();
+}
+
+/* ───────────── Render: estructura ───────────── */
+function renderDrugSelect(){
+  let h='';
+  for(const [g,name] of GROUPS){
+    const ds=DRUGS.filter(d=>d.grp===g).sort((a,b)=>a.name.localeCompare(b.name,'es'));
+    if(ds.length)h+=`<optgroup label="${esc(name)}">`+ds.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')+'</optgroup>';
+  }
+  h+='<optgroup label="Cálculo libre"><option value="otro">Otro medicamento (no listado)</option></optgroup>';
+  $('#drug').innerHTML=h;
+}
+function renderLegend(){
+  $('#legend').innerHTML=Object.values(ISO).map(v=>`<span><i style="background:${v.c}"></i>${esc(v.n)}</span>`).join('');
+}
+function renderAll(){
+  const d=drug();
+  $('#drug').value=d.custom?'otro':d.id;
+  $('#otroBtn').hidden=!!d.custom;
+  renderCard(d);
+  const sp=!!d.special;
+  $('#prepPanel').hidden=sp;$('#dosePanel').hidden=sp;$('#spPanel').hidden=!sp;
+  if(sp)renderSpecial(d);else{renderPrep(d);renderDose(d);}
+  recalc();
+}
+function renderCard(d){
+  const i=indOf(d);const iso=d.iso&&ISO[d.iso];
+  const presTxt=d.custom?'Presentación y mezcla definidas por usted':d.pres.map(p=>p.lbl).join(' · ');
+  const ms=d.special?[]:['c','b'].filter(m=>i[m]);
+  let h=`<div class="label ${iso?'':'plain'} ${iso&&iso.s?'stripes':''}" ${iso?`style="--lab:${iso.c}"`:''}>
+      <div class="label-name">${esc(d.name)}</div><div class="label-sub">${esc(presTxt)}</div></div>
+    <div class="tags">${d.custom?'<span class="tag">Cálculo libre</span>':`<span class="tag">${esc((GROUPS.find(g=>g[0]===d.grp)||[,''])[1])}</span>`}
+      ${iso?`<span class="tag">Etiqueta ISO: ${esc(iso.n)}</span>`:''}${d.route?`<span class="tag">${esc(d.route)}</span>`:''}
+      ${(d.src||[]).map(s=>`<span class="tag src">${SRC[s]}</span>`).join('')}${d.ext?`<span class="tag ext">Fuente externa: ${esc(d.ext)}</span>`:''}</div>`;
+  if(d.ind.length>1){h+=`<div><label for="ind">Indicación</label><select id="ind">${d.ind.map((x,k)=>`<option value="${k}" ${k===S.ind?'selected':''}>${esc(x.n)}${x.src==='P'?' (HRVT)':''}</option>`).join('')}</select></div>`;}
+  else h+=`<div><div class="lbl">Indicación</div><p class="ind-name">${esc(i.n)}</p></div>`;
+  h+=`<p class="ind-t">${esc(i.t)}</p>`;
+  if(ms.length===1)h+=`<div><div class="lbl">Tipo de administración</div><p class="ind-name">${ms[0]==='c'?'Infusión continua':'Bolo · carga · intermitente'}</p></div>`;
+  else if(ms.length){h+=`<div><div class="lbl" id="modeLbl">Tipo de administración</div><div class="seg" role="tablist" aria-labelledby="modeLbl">`+
+    ms.map(m=>`<button type="button" role="tab" data-act="mode" data-v="${m}" aria-selected="${S.mode===m}">${m==='c'?'Infusión continua':'Bolo · carga · intermitente'}</button>`).join('')+'</div></div>';}
+  if(d.obs&&d.obs.length)h+=`<details class="obs"><summary>Observaciones de la guía</summary><ul>${d.obs.map(o=>`<li>${esc(o)}</li>`).join('')}</ul></details>`;
+  $('#drugCard').innerHTML=h;
+}
+function renderPrep(d){
+  const mixes=(d.mix||[]).filter(m=>m.m===S.mode);
+  $('#mixWrap').hidden=!mixes.length;
+  $('#mixes').innerHTML=mixes.map((m,k)=>`<button type="button" class="mix" data-act="mix" data-i="${(d.mix||[]).indexOf(m)}" aria-pressed="false"><span>${esc(m.lbl)}</span><span class="t">${MIXSRC[m.src||'G']}</span></button>`).join('');
+  // Presentación
+  $('#presWrap').hidden=!!d.custom;
+  if(!d.custom){
+    $('#pres').innerHTML=d.pres.map(p=>`<option value="${p.id}">${esc(p.lbl)}${p.src?` · ${p.src==='P'?'HRVT':p.src==='C'?'Colombia (verificar)':'guía'}`:''}</option>`).join('')+'<option value="custom">Otra presentación (escribirla)…</option>';
+    $('#pres').value=S.pres;
+  }
+  const custom=d.custom||S.pres==='custom';
+  $('#customWrap').hidden=!custom;$('#nameWrap').hidden=!d.custom;
+  const cats=d.custom?Object.keys(AMT):Object.keys(AMT).filter(u=>AMT[u].c===AMT[d.pres[0].u].c);
+  $('#cU').innerHTML=cats.map(u=>`<option value="${u}">${u}</option>`).join('');
+  if(!cats.includes(S.cU))S.cU=cats[0];
+  $('#cU').value=S.cU;$('#cName').value=S.cName;$('#cAmt').value=S.cAmt;$('#cVol').value=S.cVol;
+  const p=presOf(d);
+  $('#nLbl').textContent=p.form==='mL'?'Cantidad del medicamento (mL)':`N.º de ${plural(p.form,2)}`;
+  $('#n').value=S.n;$('#dil').value=S.sol==='PURA'?'':S.dil;
+  // Soluciones
+  const sols=[...d.sol,...(d.pure?['PURA']:[])];
+  if(!sols.includes(S.sol))S.sol=sols[0];
+  let sh=sols.map(s=>`<button type="button" class="chip" role="radio" data-act="sol" data-v="${s}" aria-checked="${S.sol===s}" title="${esc(SOL[s].l)}">${esc(SOL[s].s)}</button>`).join('');
+  const bad=d.bad||{};
+  sh+=Object.keys(bad).map(s=>`<button type="button" class="chip" disabled title="${esc(bad[s])}">${esc(SOL[s].s)}</button>`).join('');
+  $('#sols').innerHTML=sh;
+  const badTxt=[...Object.keys(bad).map(s=>`No usar ${SOL[s].s}: ${bad[s]}.`),d.solInfo||''].filter(Boolean).join(' ');
+  $('#solBad').hidden=!badTxt;$('#solBad').textContent=badTxt;
+  $('#dil').disabled=S.sol==='PURA';
+}
+function renderDose(d){
+  const list=unitList(d);if(!list.includes(S.unit))S.unit=list[0];
+  $('#unit').innerHTML=list.map(u=>`<option value="${u}">${u}</option>`).join('');$('#unit').value=S.unit;
+  $('#dose').value=S.dose;$('#time').value=S.time;
+  $('#timeWrap').hidden=S.mode!=='b';
+  $('#doseLbl').textContent=S.mode==='c'?'Dosis deseada':'Dosis a administrar';
+  $('#rev').value=S.rev;$('#tFrom').value=S.tFrom;$('#tTo').value=S.tTo;$('#tStep').value=S.tStep;
+}
+
+/* ───────────── Cálculo general ───────────── */
+function prep(d){
+  const p=presOf(d),n=num(S.n),pure=S.sol==='PURA',dil=pure?0:num(S.dil),errs=[];
+  if(!(p.amt>0))errs.push('Escriba el contenido de medicamento por ampolla.');
+  if(!(p.vol>=0)||(pure&&!(p.vol>0)))errs.push('Escriba el volumen por ampolla (mL).');
+  if(!(n>0))errs.push(p.form==='mL'?'Escriba la cantidad de medicamento (mL).':'Escriba el número de ampollas.');
+  if(!pure&&!(dil>=0))errs.push('Escriba el volumen de diluyente (mL).');
+  const cat=AMT[p.u].c,amtBase=n*p.amt*AMT[p.u].f,drugVol=n*p.vol,v=drugVol+(pure?0:dil);
+  if(!errs.length&&!(v>0))errs.push('El volumen total debe ser mayor que 0.');
+  return{p,n,pure,dil,cat,amtBase,drugVol,vol:v,conc:amtBase/v,errs};
+}
+function newR(){return{tiles:[],meta:[],alerts:[],steps:[],formula:'',rev:false,err:[]};}
+
+function checks(d,pr,R,o){
+  const i=indOf(d),spec=i[S.mode],wt=num(S.wt);
+  if(spec&&spec.u&&AMT[pu(spec.u).a].c===pr.cat){
+    const US=pu(spec.u),fS=AMT[US.a].f,kg=US.kg?wt:1;
+    const v=S.mode==='c'?o.perH/(fS*kg*TF[US.t]):o.D/(fS*kg);
+    if(isFinite(v)&&(spec.min!=null||spec.max!=null)){
+      const lo=spec.min,hi=spec.max,rng=lo===hi?`${sm(lo)} ${spec.u}`:`${sm(lo)}–${sm(hi)} ${spec.u}`;
+      const conv=spec.u!==S.unit?` Su dosis equivale a ${sm(v)} ${spec.u}.`:'';
+      if(spec.hard&&v>spec.hard*1.0001)R.alerts.push({l:'danger',m:`Supera la dosis máxima descrita en la guía (${sm(spec.hard)} ${spec.u}).${conv}`});
+      else if(hi!=null&&v>hi*1.0001)R.alerts.push({l:'warn',m:`Por encima del rango de referencia de la guía para esta indicación (${rng}).${conv}`});
+      else if(lo!=null&&v<lo*0.9999)R.alerts.push({l:'warn',m:`Por debajo del rango de referencia de la guía para esta indicación (${rng}).${conv}`});
+    }
+    if(S.mode==='b'){
+      const a=o.D/fS;
+      if(spec.cap&&a>spec.cap*1.0001)R.alerts.push({l:'danger',m:`Supera el máximo por dosis de la guía: ${sm(spec.cap)} ${US.a}. La dosis calculada es ${sm(a)} ${US.a}.`});
+      if(spec.capKg&&wt>0&&a/wt>spec.capKg)R.alerts.push({l:'danger',m:`Supera la dosis máxima acumulada de la guía (${sm(spec.capKg)} ${US.a}/kg).`});
+    }else if(spec.capH){
+      const a=o.perH/fS;
+      if(a>spec.capH*1.0001)R.alerts.push({l:'danger',m:`Supera el máximo de la guía: ${sm(spec.capH)} ${US.a}/h. Calculado: ${sm(a)} ${US.a}/h.`});
+    }
+  }
+  for(const r of (d.conc||[])){
+    if(r.m&&r.m!==S.mode)continue;if(r.skipPure&&pr.pure)continue;
+    const c=pr.conc/AMT[r.u].f;
+    if((r.gt!=null&&c>r.gt)||(r.lt!=null&&c<r.lt)){R.alerts.push({l:r.l,m:r.msg});if(r.stop)break;}
+  }
+  const hb=S.mode==='c'?o.perH:(o.T>0?o.D/(o.T/60):NaN);
+  if(isFinite(hb))for(const r of (d.rate||[])){
+    const x=hb/AMT[r.u].f;
+    if(x>r.gt){R.alerts.push({l:r.l,m:`${r.msg} Velocidad calculada: ${sm(x)} ${r.u}/h.`});if(r.stop)break;}
+  }
+  if(d.dayKg&&S.mode==='c'&&wt>0){const day=o.perH*24/AMT[d.dayKg.u].f;if(day/wt>d.dayKg.gt)R.alerts.push({l:'warn',m:`${d.dayKg.msg}: ${sm(day)} ${d.dayKg.u} en 24 h = ${sm(day/wt)} ${d.dayKg.u}/kg.`});}
+  if(d.solNote&&d.solNote[S.sol])R.alerts.push({l:'warn',m:d.solNote[S.sol]});
+  if(!pr.pure&&pr.p.vol>0&&pr.dil===0)R.alerts.push({l:'info',m:'El diluyente está en 0 mL: la mezcla queda igual que el medicamento puro.'});
+}
+function wtAlert(R,need){if(need&&S.wtEx)R.alerts.unshift({l:'info',m:'Está usando el peso de ejemplo (70 kg). Escriba el peso real del paciente.'});}
+
+function stepsPrep(pr,uA,Q,C){
+  const P=pr.p,St=[];
+  const isMl=P.form==='mL';
+  let e1=isMl?`${sm(pr.n)} mL × ${sm(P.amt)} ${P.u}/mL = <b>${sm(pr.n*P.amt)} ${P.u}</b>`:`${sm(pr.n)} ${plural(P.form,pr.n)} × ${sm(P.amt)} ${P.u} = <b>${sm(pr.n*P.amt)} ${P.u}</b>`;
+  if(P.u!==uA)e1+=` = <b>${sm(Q)} ${uA}</b>`;
+  St.push({t:'Cantidad total de medicamento en la mezcla',e:e1,n:P.u!==uA?convNote(P.u,uA):''});
+  const dv=isMl?`${sm(pr.n)} mL`:`(${sm(pr.n)} × ${sm(P.vol)} mL)`;
+  St.push({t:'Volumen total de la mezcla',e:pr.pure?`${dv} = <b>${sm(pr.vol)} mL</b> (sin diluir)`:`${dv} + ${sm(pr.dil)} mL de ${SOL[S.sol].s} = <b>${sm(pr.vol)} mL</b>`,
+    n:pr.pure?'':'El volumen del medicamento se suma al del diluyente.'});
+  St.push({t:'Concentración final',e:`${sm(Q)} ${uA} ÷ ${sm(pr.vol)} mL = <b>${sm(C)} ${uA}/mL</b>`});
+  return St;
+}
+function frac(top,bot){return `<span class="frac"><span>${top}</span><span>${bot}</span></span>`;}
+
+function calcCont(d){
+  const R=newR(),pr=prep(d),U=pu(S.unit),uA=U.a,fA=AMT[uA].f,wt=num(S.wt),dose=num(S.dose);
+  R.err.push(...pr.errs);
+  if(AMT[uA].c!==pr.cat)R.err.push('La unidad de dosis no corresponde a la presentación.');
+  if(U.kg&&!(wt>0))R.err.push('Escriba el peso del paciente (paso 1).');
+  if(!(dose>=0))R.err.push('Escriba la dosis deseada.');
+  R.tiles=[{k:'Programe la bomba a',v:'—',u:'mL/h',big:true}];
+  if(R.err.length)return R;
+  const kgF=U.kg?wt:1,tF=TF[U.t],perH=dose*fA*kgF*tF,rate=perH/pr.conc,factor=pr.conc/(fA*kgF*tF);
+  const Q=pr.amtBase/fA,C=pr.conc/fA,perHq=perH/fA;
+  R.rev=true;R.factor=factor;
+  R.tiles=[{k:'Programe la bomba a',v:rt(rate),u:'mL/h',big:true}];
+  R.meta=[['Concentración final',concTxt(pr.conc,pr.cat)],['1 mL/h equivale a',`${sm(factor)} ${S.unit}`],['Mezcla',`${amtTxt(pr.amtBase,pr.cat)} en ${sm(pr.vol)} mL`]];
+  if(S.sol!=='PURA')R.meta.push(['Solución',SOL[S.sol].s]);
+  R.rateNum=rate;R.pr=pr;
+  if(rate>0){
+    const hrs=pr.vol/rate;
+    R.meta.push(['La mezcla dura',hrs>72?'más de 72 h':durTxt(hrs)]);
+    if(hrs<=72)R.meta.push(['Si inicia ahora, se acaba',clockTxt(hrs)]);
+    const st=d.stab&&(typeof d.stab==='number'?d.stab:d.stab[S.sol]);
+    if(st&&hrs>st)R.alerts.push({l:'warn',m:`La mezcla dura ${durTxt(hrs)}, pero es estable solo ${st} h: cambie la bolsa cada ${st} h o prepare menos volumen.`});
+  }
+  checks(d,pr,R,{perH});wtAlert(R,U.kg);
+  if(d.cumMax&&perH>0)R.alerts.push({l:'info',m:`Dosis acumulada máxima: ${d.cumMax.v} ${d.cumMax.u}. A esta velocidad, sin contar bolos, se alcanza en ${durTxt(d.cumMax.v*AMT[d.cumMax.u].f/perH)}.`});
+  R.steps=stepsPrep(pr,uA,Q,C);
+  let e4=`${sm(dose)} ${S.unit}`;if(U.kg)e4+=` × ${sm(wt)} kg`;if(U.t==='min')e4+=' × 60 min/h';if(U.t==='día')e4+=' ÷ 24 h/día';
+  R.steps.push({t:'Dosis que debe recibir en una hora',e:`${e4} = <b>${sm(perHq)} ${uA}/h</b>`,n:(!U.kg&&U.t==='h')?'La dosis ya está expresada por hora.':''});
+  R.steps.push({t:'Velocidad de infusión',e:`${sm(perHq)} ${uA}/h ÷ ${sm(C)} ${uA}/mL = <b>${rt(rate)} mL/h</b>`,n:'Dosis por hora dividida entre la concentración.'});
+  let ef=`1 mL/h × ${sm(C)} ${uA}/mL`;if(U.kg)ef+=` ÷ ${sm(wt)} kg`;if(U.t==='min')ef+=' ÷ 60 min/h';if(U.t==='día')ef+=' × 24 h/día';
+  R.steps.push({t:'Para titular: cuánto vale 1 mL/h',e:`${ef} = <b>${sm(factor)} ${S.unit}</b>`,n:`Nueva velocidad (mL/h) = nueva dosis ÷ ${sm(factor)}. Cada 1 mL/h que suba o baje la bomba cambia la dosis en ${sm(factor)} ${S.unit}.`});
+  const tl=['Dosis'],tn=[sm(dose)];if(U.kg){tl.push('Peso');tn.push(sm(wt));}tl.push('Volumen total');tn.push(sm(pr.vol));
+  let bl='Cantidad total',bn=`${sm(Q)}`;
+  if(U.t==='min'){tl.push('60');tn.push('60');}
+  if(U.t==='día'){bl+=' × 24';bn+=' × 24';}
+  R.formula=`<h3>Fórmula en un solo paso</h3>
+    <div class="fx"><span>mL/h =</span>${frac(tl.join(' × '),bl)}</div>
+    <div class="fx"><span>mL/h =</span>${frac(tn.join(' × '),bn)}<span class="res">= ${rt(rate)} mL/h</span></div>
+    <p class="fine">Dosis en ${esc(S.unit)}; cantidad total en ${uA}; volumen en mL.${U.t==='min'?' El 60 convierte minutos a horas.':''}</p>`;
+  return R;
+}
+
+function calcBolo(d){
+  const R=newR(),pr=prep(d),U=pu(S.unit),uA=U.a,fA=AMT[uA].f,wt=num(S.wt),dose=num(S.dose),T=num(S.time);
+  R.err.push(...pr.errs);
+  if(AMT[uA].c!==pr.cat)R.err.push('La unidad de dosis no corresponde a la presentación.');
+  if(U.kg&&!(wt>0))R.err.push('Escriba el peso del paciente (paso 1).');
+  if(!(dose>=0))R.err.push('Escriba la dosis a administrar.');
+  R.tiles=[{k:'Volumen a administrar',v:'—',u:'mL',big:true}];
+  if(R.err.length)return R;
+  const D=dose*fA*(U.kg?wt:1),v=D/pr.conc,Q=pr.amtBase/fA,C=pr.conc/fA,Dq=D/fA,hasT=T>0,rate=hasT?v/T*60:NaN;
+  R.tiles=[{k:'Volumen a administrar',v:vol(v),u:'mL',big:true}];
+  if(hasT)R.tiles.push({k:`Velocidad (en ${sm(T)} min)`,v:rt(rate),u:'mL/h'});
+  R.meta=[['Dosis total',amtTxt(D,pr.cat)],['Concentración',concTxt(pr.conc,pr.cat)]];
+  if(pr.pure)R.meta.push(['Equivale a',`${sm(D/(pr.p.amt*AMT[pr.p.u].f))} ${plural(pr.p.form,2)}`]);
+  else R.meta.push(['Mezcla',`${amtTxt(pr.amtBase,pr.cat)} en ${sm(pr.vol)} mL`]);
+  if(hasT)R.meta.push(['Ritmo',`${sm(v/T)} mL/min`]);
+  if(!pr.pure&&v>pr.vol*1.0001)R.alerts.push({l:'danger',m:`El volumen calculado (${vol(v)} mL) es mayor que el volumen preparado (${sm(pr.vol)} mL): prepare más medicamento.`});
+  checks(d,pr,R,{D,T});wtAlert(R,U.kg);
+  R.steps=stepsPrep(pr,uA,Q,C);
+  let e4=`${sm(dose)} ${S.unit}`;if(U.kg)e4+=` × ${sm(wt)} kg`;
+  R.steps.push({t:'Dosis a administrar',e:`${e4} = <b>${sm(Dq)} ${uA}</b>`});
+  R.steps.push({t:'Volumen a administrar',e:`${sm(Dq)} ${uA} ÷ ${sm(C)} ${uA}/mL = <b>${vol(v)} mL</b>`});
+  if(hasT)R.steps.push({t:'Velocidad para pasarlo en el tiempo indicado',e:`${vol(v)} mL ÷ ${sm(T)} min × 60 = <b>${rt(rate)} mL/h</b>`});
+  const tl=['Dosis'],tn=[sm(dose)];if(U.kg){tl.push('Peso');tn.push(sm(wt));}tl.push('Volumen total');tn.push(sm(pr.vol));
+  R.formula=`<h3>Fórmula en un solo paso</h3>
+    <div class="fx"><span>mL =</span>${frac(tl.join(' × '),'Cantidad total')}</div>
+    <div class="fx"><span>mL =</span>${frac(tn.join(' × '),sm(Q))}<span class="res">= ${vol(v)} mL</span></div>`;
+  return R;
+}
+
+/* ───────────── Cálculos especiales ───────────── */
+function spS(id){return S.sp[id];}
+function field(id,key,label,unit,hint){const v=spS(id)[key];return `<div><label for="sp-${key}">${label}</label><div class="unit-in"><input id="sp-${key}" data-sp="${key}" type="text" inputmode="decimal" class="num" autocomplete="off" value="${esc(v)}" ${hint?`placeholder="${esc(hint)}"`:''}>${unit?`<span>${unit}</span>`:''}</div></div>`;}
+const SODIO_ESQ=[
+  {id:'grave',lbl:'Grave (< 120): 1 mL/kg en 10 min',v:1,u:'mL/kg',t:10,cap:100},
+  {id:'sint',lbl:'Sintomática: 100 mL en 10 min',v:100,u:'mL',t:10},
+  {id:'alt',lbl:'Alternativa: 150 mL en 20 min',v:150,u:'mL',t:20},
+  {id:'asint',lbl:'Asintomática: 50 mL en 5 min',v:50,u:'mL',t:5},
+  {id:'inf',lbl:'Infusión: 15–30 mL/h',v:15,u:'mL/h',t:''}
+];
+const TNK=[[60,30,'< 60 kg'],[70,35,'60 a < 70 kg'],[80,40,'70 a < 80 kg'],[90,45,'80 a < 90 kg'],[Infinity,50,'≥ 90 kg']];
+const SPECIAL={
+  alteplasa:{
+    inputs:()=>`<p class="fine">Este cálculo usa el <b>peso del paso 1</b>. Presentación: frasco de 50 mg reconstituido a 1 mg/mL (1 mg = 1 mL).</p>`,
+    calc(){const R=newR(),wt=num(S.wt);
+      if(!(wt>0)){R.err.push('Escriba el peso del paciente (paso 1).');R.tiles=[{k:'Bolo IV en 1 minuto',v:'—',u:'mL',big:true}];return R;}
+      const raw=0.9*wt,tot=Math.min(raw,90),bo=tot*0.1,inf=tot*0.9,fr=Math.ceil(tot/50),sob=fr*50-tot;
+      R.tiles=[{k:'Bolo IV en 1 minuto',v:fmt(bo,1),u:'mL',big:true},{k:'Infusión en 60 minutos',v:rt(inf),u:'mL/h'}];
+      R.meta=[['Dosis total',`${fmt(tot,1)} mg = ${fmt(tot,1)} mL`],['Bolo (10 %)',`${fmt(bo,1)} mg`],['Infusión (90 %)',`${fmt(inf,1)} mg en 60 min`],['Frascos de 50 mg',`${fr}; desechar ${fmt(sob,1)} mL sobrantes`]];
+      if(raw>90)R.alerts.push({l:'info',m:'Peso ≥ 100 kg: se aplica la dosis máxima de 90 mg (9 mg en bolo + 81 mg en 60 min).'});
+      wtAlert(R,true);
+      R.alerts.push({l:'info',m:'Retire y deseche el sobrante antes de conectar la bomba, para no infundir más de la dosis calculada.'});
+      R.steps=[
+        {t:'Dosis total',e:`0,9 mg/kg × ${sm(wt)} kg = ${fmt(raw,1)} mg${raw>90?' → máximo <b>90 mg</b>':` = <b>${fmt(tot,1)} mg</b>`}`},
+        {t:'Bolo (10 % de la dosis) en 1 minuto',e:`${fmt(tot,1)} mg × 0,10 = <b>${fmt(bo,1)} mg = ${fmt(bo,1)} mL</b>`,n:'A 1 mg/mL, los mg y los mL son iguales.'},
+        {t:'Infusión (90 %) en 60 minutos',e:`${fmt(tot,1)} mg × 0,90 = ${fmt(inf,1)} mg → ${fmt(inf,1)} mL ÷ 1 h = <b>${rt(inf)} mL/h</b>`},
+        {t:'Frascos y sobrante',e:`${fr} × 50 mg = ${fr*50} mg; sobrante ${fr*50} − ${fmt(tot,1)} = <b>${fmt(sob,1)} mL</b>`}];
+      return R;}
+  },
+  tenecteplasa:{
+    inputs:()=>`<p class="fine">Este cálculo usa el <b>peso del paso 1</b>. Reconstituya el frasco con los 10 mL de agua estéril del kit (5 mg/mL).</p>`,
+    calc(){const R=newR(),wt=num(S.wt);
+      if(!(wt>0)){R.err.push('Escriba el peso del paciente (paso 1).');R.tiles=[{k:'Bolo único IV en 5 segundos',v:'—',u:'mL',big:true}];return R;}
+      const k=TNK.findIndex(b=>wt<b[0]),mg=TNK[k][1],ml=mg/5;
+      R.tiles=[{k:'Bolo único IV en 5 segundos',v:fmt(ml,1),u:'mL',big:true}];
+      R.meta=[['Dosis',`${mg} mg`],['Banda de peso',TNK[k][2]],['Concentración','5 mg/mL']];
+      wtAlert(R,true);
+      R.steps=[{t:'Banda de peso',e:`${sm(wt)} kg → <b>${TNK[k][2]}</b> → ${mg} mg`},{t:'Volumen',e:`${mg} mg ÷ 5 mg/mL = <b>${fmt(ml,1)} mL</b>`}];
+      R.formula=`<h3>Tabla de la guía (corregida)</h3><div style="overflow-x:auto"><table class="bands"><thead><tr><th>Peso</th><th>Dosis</th><th>Volumen</th></tr></thead><tbody>${TNK.map((b,j)=>`<tr class="${j===k?'on':''}"><td>${b[2]}</td><td>${b[1]} mg</td><td>${b[1]/5} mL</td></tr>`).join('')}</tbody></table></div>`;
+      return R;}
+  },
+  hierro:{
+    inputs(){const wt=num(S.wt);return `<div class="grid2">${field('hierro','hbo','Hb observada','g/dL')}${field('hierro','hbd','Hb deseada','g/dL','automática')}</div>
+      <div class="grid3">${field('hierro','lbw','Peso magro','kg',wt>0?`${fin(wt)} (peso)`:'')}${field('hierro','dil','Diluir en SSN','mL')}${field('hierro','time','Tiempo','min')}</div>
+      <p class="fine">Si deja vacía la Hb deseada se usa 12 g/dL (≤ 15 kg) o 14,8 g/dL (> 15 kg). Si deja vacío el peso magro se usa el peso del paso 1. La guía indica diluir en 250–1.000 mL de SSN y pasar en 1 hora.</p>`;},
+    calc(){const R=newR(),s=spS('hierro'),wt=num(S.wt),lbw=num(s.lbw)>0?num(s.lbw):wt,hbo=num(s.hbo),dil=num(s.dil),T=num(s.time);
+      if(!(lbw>0))R.err.push('Escriba el peso (paso 1) o el peso magro.');
+      if(!(hbo>0))R.err.push('Escriba la hemoglobina observada.');
+      if(!(dil>=0))R.err.push('Escriba el volumen de SSN.');
+      R.tiles=[{k:'Dosis total de hierro dextrán',v:'—',u:'mL',big:true}];
+      if(R.err.length)return R;
+      const hbd=num(s.hbd)>0?num(s.hbd):(lbw<=15?12:14.8),ml=0.0442*(hbd-hbo)*lbw+0.26*lbw,mg=ml*50,tot=ml+dil,rate=T>0?tot/T*60:NaN;
+      if(!(ml>0)){R.err.push('Con estos valores no se requiere reposición.');return R;}
+      R.tiles=[{k:'Dosis total de hierro dextrán',v:fmt(ml,1),u:'mL',big:true}];
+      if(T>0)R.tiles.push({k:`Velocidad (en ${sm(T)} min)`,v:rt(rate),u:'mL/h'});
+      R.meta=[['Equivale a',`${fmt(mg,0)} mg = ${fmt(ml/2,1)} ampollas`],['Hb deseada usada',`${sm(hbd)} g/dL`],['Volumen total',`${fmt(tot,1)} mL de SSN + hierro`]];
+      if(!(num(s.lbw)>0))wtAlert(R,true);
+      R.alerts.push({l:'info',m:'Haga la prueba pasando 5 mL y observe antes de continuar (guía). Nunca diluir en DAD 5 %.'});
+      R.steps=[
+        {t:'Déficit de hemoglobina',e:`${sm(hbd)} − ${sm(hbo)} = <b>${sm(hbd-hbo)} g/dL</b>`},
+        {t:'Dosis total (mL)',e:`0,0442 × ${sm(hbd-hbo)} × ${sm(lbw)} kg + 0,26 × ${sm(lbw)} kg = <b>${fmt(ml,2)} mL</b>`},
+        {t:'En miligramos y ampollas',e:`${fmt(ml,2)} mL × 50 mg/mL = <b>${fmt(mg,0)} mg</b> = ${fmt(ml/2,1)} ampollas de 2 mL`},
+        {t:'Volumen total a infundir',e:`${fmt(ml,1)} mL + ${sm(dil)} mL de SSN = <b>${fmt(tot,1)} mL</b>`}];
+      if(T>0)R.steps.push({t:'Velocidad',e:`${fmt(tot,1)} mL ÷ ${sm(T)} min × 60 = <b>${rt(rate)} mL/h</b>`});
+      return R;}
+  },
+  sodio:{
+    inputs(){const s=spS('sodio');
+      return `<div style="display:grid;gap:10px"><div class="lbl" style="margin:0">Preparación de NaCl 3 % (aligación)</div>
+        <div class="grid3">${field('sodio','conc','Concentrado de NaCl','%')}${field('sodio','tgt','Concentración deseada','%')}${field('sodio','vf','Volumen final','mL')}</div>
+        <div class="chips">${[['23,4','NaCl 23,4 % (4 M, guía)'],['11,7','NaCl 11,7 % (2 mEq/mL, Colombia)']].map(([v,l])=>`<button type="button" class="chip" role="radio" data-act="naconc" data-v="${v}" aria-checked="${Math.abs(num(s.conc)-num(v))<1e-9}">${l}</button>`).join('')}</div>
+        <p class="fine">Base: SSN 0,9 %. Elija o escriba la concentración del concentrado disponible.</p></div>
+        <div style="display:grid;gap:10px;border-top:1px solid var(--line-2);padding-top:12px"><div class="lbl" style="margin:0">Esquema de administración</div>
+        <div class="chips">${SODIO_ESQ.map(e=>`<button type="button" class="chip" role="radio" data-act="esq" data-v="${e.id}" aria-checked="${s.esq===e.id}">${esc(e.lbl)}</button>`).join('')}</div>
+        <div class="grid3">${field('sodio','v','Volumen o dosis','')}
+          <div><label for="sp-u">Unidad</label><select id="sp-u" data-sp="u">${['mL/kg','mL','mL/h'].map(u=>`<option ${s.u===u?'selected':''}>${u}</option>`).join('')}</select></div>
+          ${s.u==='mL/h'?'<div></div>':field('sodio','t','Tiempo','min')}</div></div>`;},
+    calc(){const R=newR(),s=spS('sodio'),wt=num(S.wt),conc=num(s.conc),tgt=num(s.tgt),vf=num(s.vf),v=num(s.v),T=num(s.t);
+      if(!(conc>tgt))R.err.push('El concentrado debe ser más concentrado que la solución deseada.');
+      if(!(tgt>0.9))R.err.push('La concentración deseada debe ser mayor que 0,9 %.');
+      if(!(vf>0))R.err.push('Escriba el volumen final.');
+      if(!(v>0))R.err.push('Escriba el volumen o la dosis.');
+      if(s.u==='mL/kg'&&!(wt>0))R.err.push('Escriba el peso del paciente (paso 1).');
+      R.tiles=[{k:'Velocidad',v:'—',u:'mL/h',big:true}];
+      if(R.err.length)return R;
+      const pc=tgt-0.9,pb=conc-tgt,vc=vf*pc/(pc+pb),vb=vf-vc;
+      const esq=SODIO_ESQ.find(e=>e.id===s.esq);
+      let vol2=s.u==='mL/kg'?v*wt:v,rate;
+      if(s.u==='mL/h'){rate=v;R.tiles=[{k:'Programe la bomba a',v:rt(rate),u:'mL/h',big:true}];}
+      else{
+        if(esq&&esq.cap&&s.u==='mL/kg'&&vol2>esq.cap){R.alerts.push({l:'info',m:`Se aplica el máximo de la guía: ${esq.cap} mL por bolo.`});vol2=esq.cap;}
+        rate=T>0?vol2/T*60:NaN;
+        R.tiles=[{k:'Volumen a pasar',v:fmt(vol2,1),u:'mL',big:true}];
+        if(T>0)R.tiles.push({k:`Velocidad (en ${sm(T)} min)`,v:rt(rate),u:'mL/h'});
+      }
+      R.meta=[['Preparación',`${fmt(vc,1)} mL de NaCl ${sm(conc)} % + ${fmt(vb,1)} mL de SSN`],['Volumen final',`${sm(vf)} mL al ${sm(tgt)} %`]];
+      if(Math.abs(conc-23.4)<0.01&&Math.abs(tgt-3)<0.01&&Math.abs(vf-1000)<0.01)R.meta.push(['Receta práctica de la guía','90 mL de NaCl 4 M + 910 mL de SSN (≈ 2,9 %)']);
+      if(tgt>3)R.alerts.push({l:'danger',m:'Concentraciones > 3 %: administrar solo por vía central.'});
+      else if(tgt>2)R.alerts.push({l:'info',m:'> 2 %: se recomienda vía central; ante urgencia sin CVC, el 3 % puede pasarse por vía periférica (guía).'});
+      if(s.u==='mL/kg')wtAlert(R,true);
+      R.steps=[
+        {t:'Partes de concentrado (aligación)',e:`${sm(tgt)} − 0,9 = <b>${sm(pc)} partes</b>`},
+        {t:'Partes de SSN 0,9 %',e:`${sm(conc)} − ${sm(tgt)} = <b>${sm(pb)} partes</b>`},
+        {t:'Volumen de concentrado',e:`${sm(pc)} ÷ ${sm(pc+pb)} × ${sm(vf)} mL = <b>${fmt(vc,1)} mL</b>`},
+        {t:'Volumen de SSN',e:`${sm(vf)} − ${fmt(vc,1)} = <b>${fmt(vb,1)} mL</b>`,n:'Retire ese volumen de la bolsa de SSN y adicione el concentrado.'}];
+      if(s.u!=='mL/h'){
+        if(s.u==='mL/kg')R.steps.push({t:'Volumen del bolo',e:`${sm(v)} mL/kg × ${sm(wt)} kg = <b>${fmt(v*wt,1)} mL</b>${vol2<v*wt?` → máximo ${vol2} mL`:''}`});
+        if(T>0)R.steps.push({t:'Velocidad',e:`${fmt(vol2,1)} mL ÷ ${sm(T)} min × 60 = <b>${rt(rate)} mL/h</b>`});
+      }
+      return R;}
+  }
+};
+function renderTab(d,R){
+  const show=!d.special&&S.mode==='c'&&!R.err.length,open=show&&S.tab;
+  $('#tabBtn').hidden=!show;$('#tabBox').hidden=!open;
+  $('#tabBtn').setAttribute('aria-expanded',String(open));
+  $('#tabTxt').textContent=open?'Ocultar la tabla de titulación':'Ver la tabla de titulación';
+  if(!open)return;
+  const spec=indOf(d).c||{},cur=num(S.dose),same=spec.u===S.unit;
+  const autoStep=nice(cur>0?cur/4:(spec.max>spec.min?(spec.max-spec.min)/10:1));
+  const us=num(S.tStep),step=us>0?us:autoStep;
+  const uf=num(S.tFrom),from=uf>=0?uf:step;
+  const lim=same&&(spec.hard||spec.max)?(spec.hard||spec.max):Infinity;
+  const ut=num(S.tTo),to=ut>0?ut:Math.max(Math.min(from+11*step,lim),cur>0?cur:from);
+  $('#tFrom').placeholder=fin(r10(from));$('#tTo').placeholder=fin(r10(to));$('#tStep').placeholder=fin(r10(step));
+  const rows=[];
+  for(let k=0;k<200&&rows.length<25;k++){const v=r10(from+k*step);if(v>to*(1+1e-9))break;rows.push(v);}
+  const isCur=v=>cur>0&&Math.abs(v-cur)<=cur*1e-9;
+  if(cur>0&&!rows.some(isCur))rows.push(cur);
+  rows.sort((a,b)=>a-b);
+  const lo=same?spec.min:null,hi=same?spec.max:null;
+  let h=`<table class="bands"><thead><tr><th>Dosis (${esc(S.unit)})</th><th>Programar</th></tr></thead><tbody>`;
+  for(const v of rows){const on=isCur(v),out=(lo!=null&&v<lo*(1-1e-9))||(hi!=null&&v>hi*(1+1e-9));
+    h+=`<tr class="${on?'on':''} ${out?'out':''}"><td>${sm(v)}${on?' ← actual':''}</td><td>${rt(v/R.factor)} mL/h</td></tr>`;}
+  $('#tabTable').innerHTML=h+'</tbody></table>';
+  $('#tabNote').textContent=`${pu(S.unit).kg?`Para ${sm(num(S.wt))} kg con`:'Con'} la mezcla actual (${concTxt(R.pr.conc,R.pr.cat)}).${lo!=null?' Las filas en gris están fuera del rango de referencia de la guía.':''} Cambie «Desde», «Hasta» o «Cada» para ajustar la tabla.`;
+}
+function snapshot(){return{drug:S.drug,ind:S.ind,pres:S.pres,n:S.n,dil:S.dil,sol:S.sol,dose:S.dose,unit:S.unit,cName:S.cName,cAmt:S.cAmt,cU:S.cU,cVol:S.cVol};}
+function evalItem(it){const save={...S};Object.assign(S,it,{mode:'c'});try{return calcCont(drug());}finally{for(const k of Object.keys(save))S[k]=save[k];}}
+function itemName(it){if(it.drug==='otro')return it.cName.trim()||'Cálculo libre';const d=DRUGS.find(x=>x.id===it.drug);return d?d.name:it.drug;}
+function renderList(){
+  const L=S.list;
+  $('#plCount').textContent=L.length?`${L.length} ${L.length===1?'infusión':'infusiones'}`:'';
+  if(!L.length){$('#plItems').innerHTML='<p class="fine">Aún no hay infusiones. Calcule una infusión continua y toque «Agregar a las infusiones del paciente». Las velocidades se recalculan si cambia el peso.</p>';return;}
+  let tot=0,h='<ul class="pl">';
+  L.forEach((it,k)=>{const R=evalItem(it),ok=!R.err.length,r=ok?R.rateNum:NaN;if(ok)tot+=r;
+    h+=`<li><div class="pl-main"><b>${esc(itemName(it))}</b><span>${esc(it.dose)} ${esc(it.unit)}${ok?` · ${esc(amtTxt(R.pr.amtBase,R.pr.cat))} en ${sm(R.pr.vol)} mL`:' · revise los datos'}</span></div>`+
+      `<div class="pl-rate">${ok?rt(r):'—'}<small>mL/h</small><span>${ok?`${fmt(r*24,0)} mL en 24 h`:''}</span></div>`+
+      `<div class="pl-act"><button type="button" class="mini" data-act="open" data-i="${k}">Abrir</button><button type="button" class="mini" data-act="del" data-i="${k}">Quitar</button></div></li>`;});
+  h+=`</ul><div class="pl-tot"><span>Total</span><b>${rt(tot)} mL/h</b><b>${fmt(tot*24,0)} mL en 24 h</b></div>`+
+    `<button type="button" class="linkish" data-act="clear">${S.clearArm?'Toque otra vez para vaciar la lista':'Vaciar la lista'}</button>`;
+  $('#plItems').innerHTML=h;
+}
+function renderSpecial(d){$('#spBox').innerHTML=SPECIAL[d.special].inputs();}
+
+/* ───────────── Render: resultado ───────────── */
+function recalc(){
+  const d=drug();
+  if(!d.special){const ul=unitList(d);if(!ul.includes(S.unit)){S.unit=ul[0];$('#unit').value=S.unit;}}
+  const R=d.special?SPECIAL[d.special].calc():(S.mode==='c'?calcCont(d):calcBolo(d));
+  $('#roDrug').textContent=d.custom?(S.cName.trim()||'Cálculo libre'):d.name;
+  const ok=!R.err.length;
+  $('#roLed').classList.toggle('off',!ok);
+  $('#tiles').className='tiles'+(R.tiles.length>1?' two':'');
+  $('#tiles').innerHTML=R.tiles.map((t,k)=>`<div class="tile ${t.big&&R.tiles.length===1?'big':''}"><span class="k">${esc(t.k)}</span><span class="v">${t.v}<small>${esc(t.u)}</small></span></div>`).join('');
+  $('#roErr').hidden=ok;$('#roErr').innerHTML=R.err.map(e=>`<li>${esc(e)}</li>`).join('');
+  $('#roMeta').innerHTML=ok?R.meta.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join(''):'';
+  $('#revWrap').hidden=!(ok&&R.rev);
+  if(ok&&R.rev){const x=num(S.rev);$('#revOut').textContent=x>=0?`= ${sm(x*R.factor)} ${S.unit}`:'';}
+  $('#alerts').innerHTML=R.alerts.map(a=>`<div class="alert ${a.l==='danger'?'danger':a.l==='info'?'info':''}" role="${a.l==='danger'?'alert':'status'}">${esc(a.m)}</div>`).join('');
+  const st=ok?`<ol>${R.steps.map(s=>`<li><div class="st-t">${esc(s.t)}</div><div class="st-e">${s.e}</div>${s.n?`<div class="st-n">${esc(s.n)}</div>`:''}</li>`).join('')}</ol>${R.formula?`<div class="formula">${R.formula}</div>`:''}`:'<p class="fine">Complete los datos para ver el paso a paso.</p>';
+  $('#steps').innerHTML=st;$('#steps').hidden=!S.steps;
+  $('#stepsBtn').setAttribute('aria-expanded',String(S.steps));$('#stepsTxt').textContent=S.steps?'Ocultar el paso a paso':'Ver el paso a paso del cálculo';
+  const t=R.tiles[0];$('#dockK').textContent=`${d.custom?(S.cName.trim()||'Cálculo libre'):d.name} · ${t.k}`;$('#dockV').innerHTML=`${t.v}<small>${esc(t.u)}</small>`;
+  if(!d.special){markMix(d);prepSum(d);rangeLine(d);}
+  $('#wtFlag').hidden=!S.wtEx;
+  $('#addBtn').hidden=!(!d.special&&S.mode==='c'&&ok);
+  $('#addBtn').textContent=S.addFlash?'Agregada a las infusiones del paciente ✓':'+ Agregar a las infusiones del paciente';
+  renderTab(d,R);renderList();
+}
+function markMix(d){
+  const n=num(S.n),dil=num(S.dil);
+  document.querySelectorAll('#mixes .mix').forEach(b=>{const m=d.mix[+b.dataset.i];
+    const on=m.p===S.pres&&Math.abs(m.n-n)<1e-9&&m.sol===S.sol&&(m.sol==='PURA'||Math.abs(m.dil-dil)<1e-9);
+    b.setAttribute('aria-pressed',String(on));});
+  const act=(d.mix||[]).find((m,k)=>document.querySelector(`#mixes .mix[data-i="${k}"][aria-pressed="true"]`));
+  $('#mixNote').hidden=!(act&&act.note);if(act&&act.note)$('#mixNote').textContent=act.note;
+}
+function prepSum(d){
+  const pr=prep(d);
+  if(pr.errs.length){$('#prepSum').innerHTML='<span>Complete la presentación, la cantidad y el diluyente.</span>';return;}
+  $('#prepSum').innerHTML=`<span>Mezcla: <b>${esc(amtTxt(pr.amtBase,pr.cat))}</b> en <b>${sm(pr.vol)} mL</b></span><span>Concentración: <b>${esc(concTxt(pr.conc,pr.cat))}</b></span>`;
+}
+function rangeLine(d){
+  const spec=indOf(d)[S.mode];
+  if(spec&&spec.u&&(spec.min!=null||spec.max!=null)){
+    const r=spec.min===spec.max?`${sm(spec.min)} ${spec.u}`:`${sm(spec.min)}–${sm(spec.max)} ${spec.u}`;
+    $('#range').innerHTML=`Referencia de la guía para esta indicación: <b>${esc(r)}</b>${spec.hard?` · máximo ${sm(spec.hard)}`:''}`;$('#range').hidden=false;
+  }else $('#range').hidden=true;
+}
+
+/* ───────────── Eventos ───────────── */
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.sp){S.sp[drug().special==='hierro'?'hierro':'sodio'][t.dataset.sp]=t.value;if(t.tagName==='SELECT'){renderSpecial(drug());}recalc();return;}
+  const k=t.dataset.k;if(!k||t.tagName==='SELECT')return;
+  S[k]=t.value;
+  if(k==='wt'){S.wtEx=false;if(drug().special)renderSpecial(drug());}
+  if(k==='cName')renderCard(drug());
+  recalc();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='drug'){selectDrug(t.value);return;}
+  if(t.id==='ind'){const d=drug();S.ind=+t.value;const i=indOf(d);const changed=!i[S.mode];if(changed)S.mode=i.c?'c':'b';if(!d.special)applyDefaults(changed||i.mx!=null);renderAll();return;}
+  if(t.dataset.sp&&t.tagName==='SELECT'){S.sp.sodio[t.dataset.sp]=t.value;renderSpecial(drug());recalc();return;}
+  const k=t.dataset.k;if(!k||t.tagName!=='SELECT')return;
+  const d=drug();
+  if(k==='pres'){
+    if(t.value==='custom'){const p=presOf(d);S.cAmt=fin(p.amt);S.cU=p.u;S.cVol=fin(p.vol);}
+    S.pres=t.value;renderPrep(d);renderDose(d);recalc();return;}
+  if(k==='unit'){
+    if(!unitList(d).includes(t.value)){t.value=S.unit;return;}
+    S.rev='';$('#rev').value='';S.tFrom=S.tTo=S.tStep='';['#tFrom','#tTo','#tStep'].forEach(q=>$(q).value='');
+    const from=pu(S.unit),to=pu(t.value),v=num(S.dose),wt=num(S.wt);
+    if(v>=0&&AMT[from.a]&&AMT[from.a].c===AMT[to.a].c&&(!(from.kg||to.kg)||wt>0)){
+      const kg=u=>u.kg?wt:1,base=S.mode==='c'?v*AMT[from.a].f*kg(from)*TF[from.t]:v*AMT[from.a].f*kg(from);
+      const nv=S.mode==='c'?base/(AMT[to.a].f*kg(to)*TF[to.t]):base/(AMT[to.a].f*kg(to));
+      S.dose=fin(Number(nv.toPrecision(4)));$('#dose').value=S.dose;
+    }
+  }
+  S[k]=t.value;
+  if(k==='cU'){renderCard(d);renderPrep(d);renderDose(d);}
+  recalc();
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,d=drug();
+  if(a==='otro'){selectDrug('otro');$('#cAmt').focus();return;}
+  if(a==='mode'){S.mode=b.dataset.v;if(!d.special)applyDefaults(!d.custom);renderAll();return;}
+  if(a==='mix'){applyMix(d.mix[+b.dataset.i]);renderPrep(d);recalc();return;}
+  if(a==='sol'){S.sol=b.dataset.v;if(S.sol!=='PURA'&&!(num(S.dil)>=0))S.dil='100';renderPrep(d);recalc();return;}
+  if(a==='steps'){S.steps=!S.steps;recalc();if(S.steps)$('#steps').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});return;}
+  if(a==='tab'){S.tab=!S.tab;recalc();return;}
+  if(a==='add'){S.list.push(snapshot());S.addFlash=true;recalc();clearTimeout(window._af);window._af=setTimeout(()=>{S.addFlash=false;recalc();},1800);return;}
+  if(a==='open'){const it=S.list[+b.dataset.i];if(!it)return;Object.assign(S,it,{mode:'c',rev:'',tFrom:'',tTo:'',tStep:''});renderAll();$('#h-dr').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});return;}
+  if(a==='del'){S.list.splice(+b.dataset.i,1);recalc();return;}
+  if(a==='clear'){if(S.clearArm){S.list=[];S.clearArm=false;}else{S.clearArm=true;clearTimeout(window._ca);window._ca=setTimeout(()=>{S.clearArm=false;recalc();},4000);}recalc();return;}
+  if(a==='naconc'){S.sp.sodio.conc=b.dataset.v;renderSpecial(d);recalc();return;}
+  if(a==='esq'){const q=SODIO_ESQ.find(x=>x.id===b.dataset.v),s=S.sp.sodio;s.esq=q.id;s.v=fin(q.v);s.u=q.u;s.t=q.t===''?'':fin(q.t);renderSpecial(d);recalc();return;}
+});
+const dock=$('#dock');
+function toResult(){$('#readout').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});}
+dock.addEventListener('click',toResult);
+dock.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toResult();}});
+if('IntersectionObserver' in window){
+  new IntersectionObserver(es=>{es.forEach(en=>{dock.hidden=en.isIntersecting;});},{threshold:0.15}).observe($('#readout'));
+}else dock.hidden=false;
+
+/* ───────────── Inicio ───────────── */
+renderDrugSelect();renderLegend();renderAll();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
