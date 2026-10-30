@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Conversor mmol/L ↔ mg/dL para Android. Sin permisos: la página viaja dentro del APK y no usa internet. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.github.wilcas4317.conversor"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Tema"
+        android:allowBackup="true">
+        <!-- configChanges: al girar el teléfono no se reinicia la pantalla ni se pierden los valores escritos -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode|density"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

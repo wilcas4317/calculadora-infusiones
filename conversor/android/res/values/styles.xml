@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="azul">#163C9E</color>
+    <color name="fondo">#E9EFF4</color>
+    <style name="Tema" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/azul</item>
+        <item name="android:colorPrimaryDark">@color/azul</item>
+        <item name="android:colorAccent">#1F4FD8</item>
+        <item name="android:statusBarColor">@color/azul</item>
+        <item name="android:navigationBarColor">@color/azul</item>
+        <item name="android:windowBackground">@color/fondo</item>
+    </style>
+</resources>

@@ -195,7 +195,7 @@ footer a{color:var(--accent);text-underline-offset:3px}
         <li>Young, D. S. (1987). Implementation of SI units for clinical laboratory data: Style specifications and conversion tables. <i>Annals of Internal Medicine, 106</i>(1), 114–129. <a href="https://doi.org/10.7326/0003-4819-106-1-114">https://doi.org/10.7326/0003-4819-106-1-114</a></li>
         <li>Prohaska, T., Irrgeher, J., Benefield, J., Böhlke, J. K., Chesson, L. A., Coplen, T. B., Ding, T., Dunn, P. J. H., Gröning, M., Holden, N. E., Meijer, H. A. J., Moossen, H., Possolo, A., Takahashi, Y., Vogl, J., Walczyk, T., Wang, J., Wieser, M. E., Yoneda, S., … Meija, J. (2022). Standard atomic weights of the elements 2021 (IUPAC Technical Report). <i>Pure and Applied Chemistry, 94</i>(5), 573–600. <a href="https://doi.org/10.1515/pac-2019-0603">https://doi.org/10.1515/pac-2019-0603</a></li>
       </ol>
-      <p style="margin-top:10px">Otra herramienta del mismo autor: <a href="../">Calculadora de Infusiones IV</a>.</p>
+      <p style="margin-top:10px" id="otra">Otra herramienta del mismo autor: <a href="../">Calculadora de Infusiones IV</a>.</p>
     </div>
     <div class="author">
       <span class="author-k">Autor</span>
@@ -384,8 +384,16 @@ renderSelect();renderAnalyte();
 </script>
 
 <script>
-/* Uso sin conexión: el service worker guarda toda la aplicación en el equipo en la primera visita */
-if ('serviceWorker' in navigator) {
+/* App de Android (APK): la página se abre desde los archivos del teléfono (file://) y no necesita service worker */
+if (location.protocol === 'file:') {
+  const net = document.getElementById('net');
+  net.hidden = false;
+  net.classList.remove('wait');
+  net.textContent = 'Instalada en este teléfono · no necesita internet';
+  document.getElementById('otra').hidden = true;
+}
+/* Uso sin conexión en la versión web: el service worker guarda toda la aplicación en el equipo en la primera visita */
+else if ('serviceWorker' in navigator) {
   const net = document.getElementById('net');
   let listo = false;
   const estado = () => {

@@ -1,5 +1,5 @@
 // Cambie la versión cada vez que publique cambios: así cada equipo descarga la copia nueva completa.
-const CACHE = 'conversor-v2';
+const CACHE = 'conversor-v3';
 const BASE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   './fonts/atkinson-hyperlegible-latin-400-normal.woff2', './fonts/atkinson-hyperlegible-latin-700-normal.woff2',
   './fonts/atkinson-hyperlegible-latin-400-italic.woff2', './fonts/ibm-plex-mono-latin-500-normal.woff2', './fonts/ibm-plex-mono-latin-600-normal.woff2'];

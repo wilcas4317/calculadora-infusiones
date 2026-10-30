@@ -19,3 +19,16 @@ La carpeta [`conversor/`](conversor/) contiene una segunda aplicación instalabl
 Para instalarla en el teléfono, abra `…/conversor/` en el navegador y elija «Agregar a la pantalla de inicio» (Android: Chrome; iPhone: Safari → Compartir).
 
 **Uso sin conexión.** En la primera visita con internet, el service worker guarda en el equipo toda la aplicación, incluidas las fuentes tipográficas, que van dentro de `conversor/fonts/` (Atkinson Hyperlegible e IBM Plex Mono, licencia SIL OFL 1.1). La página no pide nada a servidores externos. Desde ese momento abre y calcula sin internet; el aviso del encabezado indica «Lista para usar sin conexión». Siempre abre primero la copia guardada y, si hay conexión, la actualiza en segundo plano para la siguiente apertura. Al publicar cambios, suba la versión de `CACHE` en `conversor/sw.js`.
+
+### App de Android (sin internet ni para instalarla)
+
+`conversor/android/` contiene una app nativa mínima: un WebView que abre el conversor desde los archivos del propio APK (`file:///android_asset/www/`). No pide permisos, no usa internet y no tiene service worker. El flujo [`APK del conversor`](.github/workflows/apk-conversor.yml) la compila en GitHub con el Android SDK oficial (`aapt2`, `d8`, `zipalign`, `apksigner`, sin Gradle) cada vez que cambia `conversor/`, y publica el instalador en **Releases** como `conversor-mmol-mgdl-<versión>.apk`.
+
+Instalación en el teléfono (Android 7.0 o superior):
+
+1. Descargue el `.apk` desde Releases y páselo al teléfono por cable USB, WhatsApp, correo o memoria.
+2. Ábralo desde el administrador de archivos. Android pedirá permitir «instalar apps desconocidas» a esa aplicación; acéptelo una sola vez.
+3. Si Play Protect advierte que no reconoce la app, elija «Instalar de todas formas» (o «Más detalles» → «Instalar de todas formas»).
+4. El ícono «mmol ↔ mg» queda en el cajón de aplicaciones y abre sin conexión.
+
+Para publicar una versión nueva, aumente `android:versionCode` y `android:versionName` en `conversor/android/AndroidManifest.xml`. Si el repositorio no tiene el secreto `APK_KEYSTORE_B64` (con `APK_KEYSTORE_PASS` y `APK_KEY_ALIAS`), cada compilación se firma con una clave nueva y, para actualizar, hay que desinstalar la versión anterior antes de instalar la nueva; la app solo guarda la última sustancia elegida, así que no se pierde nada importante.
