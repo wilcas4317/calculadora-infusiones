@@ -1,8 +1,12 @@
-const CACHE = 'conversor-v1';
-const BASE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
+// Cambie la versión cada vez que publique cambios: así cada equipo descarga la copia nueva completa.
+const CACHE = 'conversor-v2';
+const BASE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png',
+  './fonts/atkinson-hyperlegible-latin-400-normal.woff2', './fonts/atkinson-hyperlegible-latin-700-normal.woff2',
+  './fonts/atkinson-hyperlegible-latin-400-italic.woff2', './fonts/ibm-plex-mono-latin-500-normal.woff2', './fonts/ibm-plex-mono-latin-600-normal.woff2'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).then(() => self.skipWaiting()));
+  // cache: 'reload' evita guardar una copia vieja de la caché HTTP del navegador
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
@@ -11,17 +15,19 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;
-  const guardar = res => {
-    if (res && (res.ok || res.type === 'opaque')) {
-      const copia = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copia));
-    }
-    return res;
-  };
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const guardar = (clave, res) => res && res.ok
+    ? caches.open(CACHE).then(c => c.put(clave, res.clone())).then(() => res, () => res)
+    : res;
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(guardar).catch(() => caches.match(req).then(r => r || caches.match('./index.html'))));
+    // Primero la copia guardada (abre al instante, con o sin señal); en segundo plano se actualiza para la próxima vez
+    const limpia = new URL(req.url); limpia.search = ''; limpia.hash = '';
+    const red = fetch(req).then(res => guardar(limpia.href, res));
+    e.waitUntil(red.then(() => {}, () => {}));
+    e.respondWith(caches.match(limpia.href)
+      .then(hit => hit || caches.match('./index.html'))
+      .then(hit => hit || red));
     return;
   }
-  e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(guardar)));
+  e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => guardar(req, res))));
 });

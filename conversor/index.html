@@ -11,10 +11,13 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>html,body{margin:0}img{max-width:100%}</style>
 <title>Conversor mmol/L ↔ mg/dL</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
+/* Fuentes locales (SIL OFL 1.1, ver fonts/): la página no depende de servidores externos y funciona sin conexión */
+@font-face{font-family:"Atkinson Hyperlegible";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Atkinson Hyperlegible";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Atkinson Hyperlegible";font-style:italic;font-weight:400;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/ibm-plex-mono-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
   color-scheme:light;
   --bg:#E9EFF4; --surface:#FFFFFF; --surface-2:#F5F8FB; --ink:#0F2230; --ink-2:#3B5261; --ink-3:#5F7684;
@@ -40,6 +43,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16p
 .brand h1{margin:0;font-size:clamp(1.4rem,1.05rem + 1.5vw,1.95rem);line-height:1.1;letter-spacing:-.01em;text-wrap:balance}
 .brand p{margin:.3rem 0 0;color:#DCE6FF;font-size:.96rem}
 .top-note{margin:0;font-size:.85rem;color:#DCE6FF;border-left:2px solid rgba(255,255,255,.35);padding-left:12px}
+.net{margin:0;justify-self:start;display:inline-flex;align-items:center;gap:8px;font-size:.82rem;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
+.net::before{content:"";width:8px;height:8px;border-radius:50%;background:#5BE49B;box-shadow:0 0 6px #5BE49B}
+.net.wait::before{background:#C9D8FF;box-shadow:none}
+.net.off{background:#FFD166;color:#3A2A00}
+.net.off::before{background:#7A4300;box-shadow:none}
 
 .col{display:grid;gap:16px;min-width:0}
 .panel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px;display:grid;gap:14px;min-width:0;box-shadow:var(--shadow)}
@@ -140,6 +148,7 @@ footer a{color:var(--accent);text-underline-offset:3px}
       </div>
     </div>
     <p class="top-note">Herramienta de apoyo. Confirme siempre las unidades y los valores de referencia de su laboratorio.</p>
+    <p class="net wait" id="net" role="status" hidden></p>
   </header>
 
   <main class="col">
@@ -375,8 +384,25 @@ renderSelect();renderAnalyte();
 </script>
 
 <script>
+/* Uso sin conexión: el service worker guarda toda la aplicación en el equipo en la primera visita */
 if ('serviceWorker' in navigator) {
+  const net = document.getElementById('net');
+  let listo = false;
+  const estado = () => {
+    net.hidden = false;
+    net.classList.toggle('off', !navigator.onLine);
+    net.classList.toggle('wait', navigator.onLine && !listo);
+    net.textContent = !navigator.onLine
+      ? (listo ? 'Sin conexión · funciona con la copia guardada en este equipo' : 'Sin conexión')
+      : (listo ? 'Lista para usar sin conexión' : 'Guardando la aplicación para usarla sin conexión…');
+  };
+  estado();
+  addEventListener('online', estado);
+  addEventListener('offline', estado);
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  navigator.serviceWorker.ready.then(() => { listo = true; estado(); });
+  // Pide al navegador no borrar la copia guardada cuando falte espacio
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
 </script>
 </body>
