@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Conversor de unidades de laboratorio clínico: mmol/L, µmol/L y mEq/L a mg/dL y viceversa, con el peso molecular y el paso a paso de cada cálculo.">
+<meta name="author" content="Dr. William Ricardo Castañeda Vargas">
+<meta name="theme-color" content="#163C9E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>html,body{margin:0}img{max-width:100%}</style>
+<title>Conversor mmol/L ↔ mg/dL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#E9EFF4; --surface:#FFFFFF; --surface-2:#F5F8FB; --ink:#0F2230; --ink-2:#3B5261; --ink-3:#5F7684;
+  --line:#CBD7E0; --line-2:#E1E8EE;
+  --accent:#1F4FD8; --accent-ink:#FFFFFF; --accent-soft:#E3EBFF;
+  --pump:#163C9E; --pump-2:#2352CC; --lcd:#FFFFFF; --lcd-unit:#FFD166; --lcd-dim:#C9D8FF; --pump-ink:#FFFFFF;
+  --info:#1D4880; --info-bg:#EAF1FB; --info-line:#B9CDEB;
+  --shadow:0 1px 2px rgba(15,34,48,.06),0 6px 18px rgba(15,34,48,.06);
+  --radius:12px;
+  --font:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.shell{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:18px calc(32px + env(safe-area-inset-bottom,0px))}
+
+/* Encabezado */
+.top{display:grid;gap:12px;padding:18px 20px;margin-bottom:18px;border-radius:16px;background:var(--pump);color:#fff;box-shadow:var(--shadow)}
+.brand{display:flex;gap:14px;align-items:center}
+.drop{flex:none;width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.drop svg{width:24px;height:24px}
+.brand h1{margin:0;font-size:clamp(1.4rem,1.05rem + 1.5vw,1.95rem);line-height:1.1;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:.3rem 0 0;color:#DCE6FF;font-size:.96rem}
+.top-note{margin:0;font-size:.85rem;color:#DCE6FF;border-left:2px solid rgba(255,255,255,.35);padding-left:12px}
+
+.col{display:grid;gap:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px;display:grid;gap:14px;min-width:0;box-shadow:var(--shadow)}
+.step-h{display:flex;align-items:center;gap:10px;margin:0;font-size:1.12rem;line-height:1.25;color:var(--ink)}
+.step-h .no{flex:none;font-family:var(--mono);font-size:.8rem;font-weight:600;color:#fff;background:var(--accent);border-radius:999px;width:1.75rem;height:1.75rem;display:inline-grid;place-items:center}
+
+label{display:block;font-weight:700;font-size:.9rem;margin-bottom:6px;color:var(--ink)}
+.opt{font-weight:400;color:var(--ink-3)}
+input[type=text],select{width:100%;min-height:48px;font:inherit;font-size:1.05rem;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line);border-radius:9px;padding:10px 12px}
+select{padding-right:34px}
+input.num{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=text]:focus,select:focus{border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fine{margin:0;font-size:.86rem;color:var(--ink-3)}
+.unit-in{position:relative}
+.unit-in input{padding-right:64px}
+.unit-in span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-family:var(--mono);font-size:.95rem;pointer-events:none}
+
+/* Sustancia */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.9rem;min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.card{border-radius:10px;padding:12px 14px;background:var(--info-bg);border:1px solid var(--info-line);color:var(--info);display:grid;gap:4px;font-size:.9rem}
+.card-n{font-weight:700;font-size:1.15rem;line-height:1.25;color:var(--ink)}
+.card-f{font-family:var(--mono);font-size:.88rem;color:var(--ink-2)}
+.card-f b{font-weight:600;color:var(--accent)}
+.card p{margin:0}
+
+/* Lectura tipo bomba con campos editables */
+.readout{background:var(--pump);color:var(--pump-ink);border-radius:16px;padding:18px;display:grid;gap:14px;box-shadow:0 10px 28px rgba(22,60,158,.28)}
+.ro-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--lcd-dim)}
+.ro-head .led{width:9px;height:9px;border-radius:50%;background:#5BE49B;box-shadow:0 0 8px #5BE49B}
+.ro-head .led.off{background:#FFD166;box-shadow:none}
+.fields{display:grid;gap:10px}
+.fld{background:var(--pump-2);border-radius:11px;padding:10px 12px 12px;display:grid;gap:4px;border:2px solid transparent;min-width:0}
+.fld.src{border-color:var(--lcd-unit)}
+.fld label{margin:0;display:flex;justify-content:space-between;gap:8px;font-weight:400;font-size:.8rem;color:var(--lcd-dim)}
+.fld label i{font-style:normal;color:var(--lcd-unit)}
+.fld input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;font-size:clamp(1.45rem,1.2rem + 1.4vw,1.9rem);min-height:58px;padding-right:96px}
+.fld input:focus{border-color:var(--lcd-unit)}
+.fld input::placeholder{color:var(--lcd-dim);opacity:.6}
+.fld .unit-in span{color:var(--lcd-unit);font-size:1rem}
+.ro-meta{margin:0;display:grid;gap:6px}
+.ro-meta div{display:flex;justify-content:space-between;gap:12px;font-size:.9rem;border-top:1px solid rgba(255,255,255,.16);padding-top:6px}
+.ro-meta dt{color:var(--lcd-dim)}
+.ro-meta dd{margin:0;text-align:right;font-family:var(--mono);font-size:.86rem;color:var(--pump-ink)}
+.ro-err{margin:0;color:#FFE08A;font-size:.92rem}
+.clear{font:inherit;font-size:.86rem;justify-self:end;min-height:36px;padding:4px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;cursor:pointer}
+.clear:hover{background:rgba(255,255,255,.1)}
+
+/* Paso a paso */
+.steps-btn{font:inherit;font-weight:700;font-size:1rem;width:100%;min-height:50px;border-radius:11px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.steps-btn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+.steps-btn svg{width:18px;height:18px;transition:transform .2s}
+.steps-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.steps-btn svg{transition:none}}
+.steps{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 18px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.steps ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:28px 1fr;gap:2px 10px}
+.steps li::before{content:counter(s);grid-row:span 3;font-family:var(--mono);font-size:.78rem;font-weight:600;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.st-t{font-weight:700;font-size:.93rem}
+.st-e{font-family:var(--mono);font-size:.86rem;color:var(--ink);overflow-wrap:anywhere;line-height:1.55}
+.st-e b{font-weight:600;color:var(--accent);background:var(--accent-soft);padding:0 4px;border-radius:4px}
+.st-n{font-size:.84rem;color:var(--ink-3)}
+.formula{border-top:1px solid var(--line-2);padding-top:12px;display:grid;gap:8px}
+.formula h3{margin:0;font-size:.9rem}
+.fx{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:.86rem;overflow-x:auto}
+.frac{display:inline-grid;text-align:center}
+.frac span:first-child{border-bottom:1.5px solid var(--ink);padding:0 6px 2px}
+.frac span:last-child{padding:2px 6px 0}
+
+/* Pie */
+footer{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:16px;font-size:.88rem;color:var(--ink-2)}
+footer h2{font-size:.95rem;margin:0 0 6px;color:var(--ink)}
+footer p,footer ol{margin:0}
+footer ol{padding-left:1.1rem;display:grid;gap:4px}
+footer a{color:var(--accent);text-underline-offset:3px}
+.warn-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.author{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding-top:14px;border-top:1px solid var(--line-2)}
+.author-k{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.author-n{font-size:1rem;font-weight:700;color:var(--ink)}
+.author-c{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="drop" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 8.5h12.5m-3.5-3.5 3.5 3.5-3.5 3.5M19 15.5H6.5m3.5-3.5-3.5 3.5 3.5 3.5" stroke="#FFD166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>Conversor mmol/L ↔ mg/dL</h1>
+        <p>Elija la sustancia y escriba el valor en cualquier unidad: las demás se calculan al instante, con el peso molecular y el paso a paso.</p>
+      </div>
+    </div>
+    <p class="top-note">Herramienta de apoyo. Confirme siempre las unidades y los valores de referencia de su laboratorio.</p>
+  </header>
+
+  <main class="col">
+    <!-- 1. Sustancia -->
+    <section class="panel" aria-labelledby="h-an">
+      <h2 class="step-h" id="h-an"><span class="no">1</span>Sustancia</h2>
+      <div class="chips" id="chips" role="group" aria-label="Sustancias frecuentes"></div>
+      <div>
+        <label for="an">Todas las sustancias</label>
+        <select id="an"></select>
+      </div>
+      <div class="grid2" id="custom" hidden>
+        <div><label for="pm">Peso molecular</label><div class="unit-in"><input id="pm" type="text" inputmode="decimal" class="num" autocomplete="off" placeholder="Ej.: 180,16"><span>g/mol</span></div></div>
+        <div><label for="z">Valencia <span class="opt">(opcional)</span></label><input id="z" type="text" inputmode="decimal" class="num" autocomplete="off" placeholder="Ej.: 2"></div>
+      </div>
+      <div class="card" id="card"></div>
+    </section>
+
+    <!-- 2. Valores -->
+    <section class="readout" aria-labelledby="h-val">
+      <div class="ro-head"><span id="h-val">2 · Escriba el valor en cualquier unidad</span><span class="led off" id="led"></span></div>
+      <div class="fields" id="fields"></div>
+      <p class="ro-err" id="err" role="status" hidden></p>
+      <dl class="ro-meta" id="factors"></dl>
+      <button type="button" class="clear" id="clear">Borrar valor</button>
+    </section>
+
+    <button type="button" class="steps-btn" id="stepsBtn" aria-expanded="false" aria-controls="steps">
+      Ver el paso a paso
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <section class="steps" id="steps" hidden aria-label="Paso a paso del cálculo"></section>
+  </main>
+
+  <footer>
+    <div class="warn-box">
+      <h2>Uso responsable</h2>
+      <p>Este conversor cambia la unidad de un resultado de laboratorio; no interpreta el resultado. Los valores de referencia dependen del método y del laboratorio. Verifique que la unidad de origen sea la correcta antes de usar la cifra convertida en una decisión clínica.</p>
+    </div>
+    <div>
+      <h2>Método y fuentes</h2>
+      <p>Cada factor se calcula con el peso molecular (PM) de la sustancia: mg/dL = mmol/L × PM ÷ 10. Los PM se obtienen de los pesos atómicos estándar abreviados de la IUPAC y reproducen los factores de conversión clínicos clásicos con diferencias menores de 0,05 %.</p>
+      <ol style="margin-top:8px">
+        <li>Young, D. S. (1987). Implementation of SI units for clinical laboratory data: Style specifications and conversion tables. <i>Annals of Internal Medicine, 106</i>(1), 114–129. <a href="https://doi.org/10.7326/0003-4819-106-1-114">https://doi.org/10.7326/0003-4819-106-1-114</a></li>
+        <li>Prohaska, T., Irrgeher, J., Benefield, J., Böhlke, J. K., Chesson, L. A., Coplen, T. B., Ding, T., Dunn, P. J. H., Gröning, M., Holden, N. E., Meijer, H. A. J., Moossen, H., Possolo, A., Takahashi, Y., Vogl, J., Walczyk, T., Wang, J., Wieser, M. E., Yoneda, S., … Meija, J. (2022). Standard atomic weights of the elements 2021 (IUPAC Technical Report). <i>Pure and Applied Chemistry, 94</i>(5), 573–600. <a href="https://doi.org/10.1515/pac-2019-0603">https://doi.org/10.1515/pac-2019-0603</a></li>
+      </ol>
+      <p style="margin-top:10px">Otra herramienta del mismo autor: <a href="../">Calculadora de Infusiones IV</a>.</p>
+    </div>
+    <div class="author">
+      <span class="author-k">Autor</span>
+      <span class="author-n">Dr. William Ricardo Castañeda Vargas</span>
+      <span class="author-c">Médico · Mg. Epidemiología · Esp. IA</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ───────────── Unidades ─────────────
+   Cada unidad se define por su valor equivalente a 1 mmol/L: k = c × PM^e × z^q
+   (PM: peso molecular en g/mol; z: valencia). Factor de A a B = kB ÷ kA. */
+const UN={
+  'mmol/L':{u:'mmol/L',t:'Unidad SI',c:1,e:0,q:0},
+  'µmol/L':{u:'µmol/L',t:'Unidad SI',c:1000,e:0,q:0,w:'1 mmol = 1000 µmol.'},
+  'mg/dL':{u:'mg/dL',t:'Unidad convencional',c:.1,e:1,q:0,w:'1 mmol pesa PM mg y 1 L tiene 10 dL.'},
+  'µg/dL':{u:'µg/dL',t:'Unidad convencional',c:100,e:1,q:0,w:'1 mmol pesa PM × 1000 µg y 1 L tiene 10 dL.'},
+  'g/L':{u:'g/L',t:'Gramos por litro',c:.001,e:1,q:0,w:'1 mmol pesa PM ÷ 1000 g.'},
+  'mEq/L':{u:'mEq/L',t:'Equivalentes',c:1,e:0,q:1,w:'mEq = mmol × valencia (carga del ion).'},
+  'BUN':{u:'mg/dL',t:'BUN · nitrógeno ureico',nm:'mg/dL de BUN',c:2.8014,e:0,q:0,w:'Cada mmol de urea contiene 2 átomos de nitrógeno: 2 × 14,007 = 28,014 mg, es decir, 2,8014 mg/dL por cada mmol/L.'}
+};
+
+/* ───────────── Sustancias ─────────────
+   PM = suma de los pesos atómicos estándar abreviados IUPAC 2021
+   (H 1,008; C 12,011; N 14,007; O 15,999; Na 22,990; Mg 24,305; P 30,974; Cl 35,45; K 39,098; Ca 40,078; Fe 55,845). */
+const AN=[
+  {id:'glucosa',g:'Carbohidratos y cetonas',n:'Glucosa',fm:'C₆H₁₂O₆',pm:180.156,u:['mmol/L','mg/dL'],top:1},
+  {id:'lactato',g:'Carbohidratos y cetonas',n:'Lactato',fm:'C₃H₆O₃',pm:90.078,u:['mmol/L','mg/dL'],top:1,
+    nt:'Se usa el PM del ácido láctico (90,078 g/mol), convención de las tablas de conversión clínicas. Con el anión lactato (89,07 g/mol) el resultado cambia alrededor de 1 %.'},
+  {id:'bhb',g:'Carbohidratos y cetonas',n:'β-hidroxibutirato (cetonemia)',sn:'β-hidroxibutirato',fm:'C₄H₈O₃',pm:104.105,u:['mmol/L','mg/dL']},
+  {id:'creatinina',g:'Función renal',n:'Creatinina',fm:'C₄H₇N₃O',pm:113.12,u:['µmol/L','mg/dL'],top:1},
+  {id:'urea',g:'Función renal',n:'Urea y BUN (nitrógeno ureico)',sn:'Urea / BUN',fm:'CH₄N₂O',pm:60.056,u:['mmol/L','mg/dL','BUN'],top:1,
+    x:{'mmol/L':{t:'Unidad SI · urea',nm:'mmol/L de urea'},'mg/dL':{t:'Unidad convencional · urea',nm:'mg/dL de urea'}},
+    nt:'El BUN expresa solo el nitrógeno de la urea: urea (mg/dL) = BUN (mg/dL) × 2,14.'},
+  {id:'urico',g:'Función renal',n:'Ácido úrico',fm:'C₅H₄N₄O₃',pm:168.112,u:['µmol/L','mg/dL']},
+  {id:'colesterol',g:'Lípidos',n:'Colesterol (total, HDL, LDL, no-HDL)',sn:'Colesterol',fm:'C₂₇H₄₆O',pm:386.664,u:['mmol/L','mg/dL'],top:1},
+  {id:'tg',g:'Lípidos',n:'Triglicéridos',fm:'C₅₇H₁₀₄O₆ (trioleína)',pm:885.453,u:['mmol/L','mg/dL'],top:1,
+    nt:'Por convención, los triglicéridos se convierten con el PM de la trioleína.'},
+  {id:'sodio',g:'Electrolitos y minerales',n:'Sodio',fm:'Na⁺',pm:22.99,z:1,u:['mmol/L','mEq/L','mg/dL']},
+  {id:'potasio',g:'Electrolitos y minerales',n:'Potasio',fm:'K⁺',pm:39.098,z:1,u:['mmol/L','mEq/L','mg/dL']},
+  {id:'cloro',g:'Electrolitos y minerales',n:'Cloro',fm:'Cl⁻',pm:35.45,z:1,u:['mmol/L','mEq/L','mg/dL']},
+  {id:'calcio',g:'Electrolitos y minerales',n:'Calcio (total o iónico)',sn:'Calcio',fm:'Ca²⁺',pm:40.078,z:2,u:['mmol/L','mg/dL','mEq/L'],top:1},
+  {id:'magnesio',g:'Electrolitos y minerales',n:'Magnesio',fm:'Mg²⁺',pm:24.305,z:2,u:['mmol/L','mg/dL','mEq/L'],top:1},
+  {id:'fosforo',g:'Electrolitos y minerales',n:'Fósforo inorgánico (fosfato)',sn:'Fósforo',fm:'P',pm:30.974,u:['mmol/L','mg/dL'],top:1,
+    nt:'Se expresa como fósforo elemental (P). No se ofrece mEq/L porque la carga media del fosfato depende del pH (≈ 1,8 a pH 7,4, con pKa₂ de 6,8).'},
+  {id:'bilirrubina',g:'Hígado, tóxicos y otros',n:'Bilirrubina (total, directa o indirecta)',sn:'Bilirrubina',fm:'C₃₃H₃₆N₄O₆',pm:584.673,u:['µmol/L','mg/dL']},
+  {id:'amonio',g:'Hígado, tóxicos y otros',n:'Amonio (expresado como NH₃)',sn:'Amonio',fm:'NH₃',pm:17.031,u:['µmol/L','µg/dL']},
+  {id:'hierro',g:'Hígado, tóxicos y otros',n:'Hierro sérico',sn:'Hierro',fm:'Fe',pm:55.845,u:['µmol/L','µg/dL']},
+  {id:'etanol',g:'Hígado, tóxicos y otros',n:'Etanol (alcoholemia)',sn:'Etanol',fm:'C₂H₆O',pm:46.069,u:['mmol/L','mg/dL','g/L'],
+    nt:'mg/dL equivale a mg/100 mL.'},
+  {id:'otra',g:'Otra sustancia',n:'Otra sustancia (peso molecular propio)',sn:'Otra',custom:1,u:['mmol/L','mg/dL','µmol/L','mEq/L']}
+];
+const byId=id=>AN.find(a=>a.id===id);
+
+/* ───────────── Estado ───────────── */
+const KEY='conversor-mg-mmol';
+const S={an:'glucosa',src:'mmol/L',val:'',pm:'',z:'',steps:false};
+try{const g=JSON.parse(localStorage.getItem(KEY)||'{}');if(byId(g.an))S.an=g.an;if(typeof g.pm==='string')S.pm=g.pm;if(typeof g.z==='string')S.z=g.z;}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({an:S.an,pm:S.pm,z:S.z}));}catch(e){}}
+
+/* ───────────── Utilidades ───────────── */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function num(v){if(v==null)return NaN;let s=String(v).trim().replace(/\s+/g,'');if(!s)return NaN;
+  if(/^[1-9]\d{0,2}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');else if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');
+  return Number(s);}
+const NFC={};
+function fmt(x,d){if(!isFinite(x))return '—';NFC[d]=NFC[d]||new Intl.NumberFormat('es-CO',{maximumFractionDigits:d});return NFC[d].format(x);}
+// Resultado: cifras acordes con la forma en que los laboratorios reportan cada magnitud
+function out(x){const a=Math.abs(x);return fmt(x,a>=100?0:a>=10?1:a>=1?2:a>=0.1?3:4);}
+const p6=x=>fmt(Number(x.toPrecision(6)),12);
+const p4=x=>fmt(Number(x.toPrecision(4)),12);
+const r10=x=>Number(x.toPrecision(10));
+
+/* Sustancia activa con PM y valencia resueltos */
+function cur(){
+  const a=byId(S.an);
+  if(!a.custom)return {...a,ok:true};
+  const pm=num(S.pm),z=num(S.z),zok=z>0&&Number.isInteger(z);
+  return {...a,pm,z:zok?z:undefined,u:a.u.filter(k=>k!=='mEq/L'||zok),ok:pm>0,zbad:S.z.trim()!==''&&!zok};
+}
+function units(a){return a.u.map(k=>({k,...UN[k],...(a.x&&a.x[k]||{}),nm:(a.x&&a.x[k]&&a.x[k].nm)||UN[k].nm||UN[k].u}));}
+const kv=(un,a)=>un.c*Math.pow(a.pm,un.e)*Math.pow(a.z||1,un.q);
+
+/* Factor de A a B en texto: simbólico (PM, z) y con los valores sustituidos */
+function fxTxt(A,B,a){
+  const c=r10(B.c/A.c),e=B.e-A.e,q=B.q-A.q,n=[],d=[],nv=[],dv=[];
+  if(c>1){n.push(fmt(c,6));nv.push(fmt(c,6));}else if(c<1){const r=fmt(r10(1/c),6);d.push(r);dv.push(r);}
+  if(e>0){n.push('PM');nv.push(fmt(a.pm,3));}else if(e<0){d.push('PM');dv.push(fmt(a.pm,3));}
+  if(q>0){n.push('z');nv.push(fmt(a.z,0));}else if(q<0){d.push('z');dv.push(fmt(a.z,0));}
+  const j=(x,y)=>(x.length?x.join(' × '):'1')+(y.length?' ÷ '+(y.length>1?`(${y.join(' × ')})`:y[0]):'');
+  return [j(n,d),j(nv,dv)];
+}
+
+/* ───────────── Render ───────────── */
+function renderSelect(){
+  const sel=$('#an');let html='',g='';
+  AN.forEach(a=>{if(a.g!==g){if(g)html+='</optgroup>';g=a.g;html+=`<optgroup label="${esc(g)}">`;}html+=`<option value="${a.id}">${esc(a.n)}</option>`;});
+  sel.innerHTML=html+'</optgroup>';
+  $('#chips').innerHTML=AN.filter(a=>a.top).map(a=>`<button type="button" class="chip" data-an="${a.id}">${esc(a.sn||a.n)}</button>`).join('');
+}
+
+function renderAnalyte(){
+  const a=cur();
+  $('#an').value=S.an;
+  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.an===S.an)));
+  $('#custom').hidden=!a.custom;
+  if(a.custom){$('#pm').value=S.pm;$('#z').value=S.z;}
+  const pmTxt=a.ok?`PM = <b>${fmt(a.pm,3)} g/mol</b>`:'PM = <b>escriba el peso molecular</b>';
+  const zTxt=a.z?` · valencia z = ${fmt(a.z,0)}`:'';
+  $('#card').innerHTML=`<span class="card-n">${esc(a.n)}</span>`+
+    `<span class="card-f">${a.fm?esc(a.fm)+' · ':''}${pmTxt}${zTxt}</span>`+
+    (a.nt?`<p>${esc(a.nt)}</p>`:'')+
+    (a.custom?`<p>Use el PM de la forma química en que el laboratorio expresa el resultado. La valencia (número entero) solo se usa para calcular mEq/L.</p>`:'');
+  const us=units(a);
+  if(!us.some(u=>u.k===S.src))S.src=us[0].k;
+  $('#fields').innerHTML=us.map((u,i)=>`<div class="fld" data-k="${u.k}"><label for="f${i}"><span>${esc(u.t)}</span><i></i></label>`+
+    `<div class="unit-in"><input id="f${i}" data-k="${u.k}" type="text" inputmode="decimal" class="num" autocomplete="off" placeholder="0"><span>${esc(u.u)}</span></div></div>`).join('');
+  $('#fields').querySelector(`input[data-k="${S.src}"]`).value=S.val;
+  recalc();
+}
+
+function recalc(){
+  const a=cur(),us=units(a),A=us.find(u=>u.k===S.src),v=num(S.val),has=S.val.trim()!=='';
+  const valid=a.ok&&has&&isFinite(v)&&v>=0;
+  let err='';
+  if(!a.ok)err='Escriba el peso molecular de la sustancia (mayor que 0) para convertir.';
+  else if(has&&!(isFinite(v)&&v>=0))err='Escriba un número mayor o igual a 0. Puede usar coma o punto decimal.';
+  else if(a.zbad)err='La valencia debe ser un número entero mayor que 0; mientras tanto se omite mEq/L.';
+  $('#err').textContent=err;$('#err').hidden=!err;
+  $('#led').classList.toggle('off',!valid);
+  const mmol=valid?v/kv(A,a):NaN;
+  document.querySelectorAll('.fld').forEach(f=>{
+    const k=f.dataset.k,src=k===S.src,inp=f.querySelector('input');
+    f.classList.toggle('src',src&&has);
+    f.querySelector('label i').textContent=has?(src?'Valor escrito':'Resultado'):'';
+    if(!src)inp.value=valid?out(mmol*kv(us.find(u=>u.k===k),a)):'';
+  });
+  // Factores rápidos desde la unidad de origen
+  $('#factors').innerHTML=a.ok?us.filter(B=>B.k!==S.src).map(B=>`<div><dt>${esc(A.nm)} → ${esc(B.nm)}</dt><dd>× ${p4(kv(B,a)/kv(A,a))}</dd></div>`).join(''):'';
+  renderSteps(a,us,A,v,valid);
+}
+
+function renderSteps(a,us,A,v,valid){
+  const box=$('#steps');
+  box.hidden=!S.steps;$('#stepsBtn').setAttribute('aria-expanded',String(S.steps));
+  if(!S.steps)return;
+  if(!valid){box.innerHTML='<p class="fine">Escriba un valor para ver el paso a paso.</p>';return;}
+  const pmSrc=a.custom?'Valor escrito por usted.':'Suma de los pesos atómicos estándar (IUPAC, 2021).';
+  let li=`<li><span class="st-t">Peso molecular (PM)</span><span class="st-e">${a.fm?esc(a.fm)+' = ':''}<b>${fmt(a.pm,3)} g/mol</b>${a.z?` · z = <b>${fmt(a.z,0)}</b>`:''}</span><span class="st-n">${pmSrc}</span></li>`;
+  us.filter(B=>B.k!==A.k).forEach(B=>{
+    const F=kv(B,a)/kv(A,a),[sym,val]=fxTxt(A,B,a);
+    const fl='Factor = '+[sym,val!==sym&&val,/[×÷]/.test(val)&&p6(F)].filter(Boolean).join(' = ');
+    const why=[A.w,B.w].filter((w,i,arr)=>w&&arr.indexOf(w)===i).join(' ');
+    li+=`<li><span class="st-t">De ${esc(A.nm)} a ${esc(B.nm)}</span>`+
+      `<span class="st-e">${esc(fl)}<br>${fmt(v,10)} × ${p6(F)} = <b>${out(v*F)} ${esc(B.nm)}</b></span>`+
+      `<span class="st-n">${esc(why)}</span></li>`;
+  });
+  box.innerHTML=`<ol>${li}</ol>`+
+    `<div class="formula"><h3>Fórmula general</h3>`+
+    `<div class="fx">mg/dL = <span class="frac"><span>mmol/L × PM</span><span>10</span></span></div>`+
+    `<div class="fx">mmol/L = <span class="frac"><span>mg/dL × 10</span><span>PM</span></span></div>`+
+    `<p class="fine">Los resultados se redondean como suelen reportarse; el factor completo aparece en cada paso.</p></div>`;
+}
+
+/* ───────────── Eventos ───────────── */
+function setAnalyte(id){
+  const prev=units(cur()).find(u=>u.k===S.src);
+  S.an=id;save();
+  // Conserva el valor solo si la nueva sustancia tiene la misma unidad de origen
+  if(!units(cur()).some(u=>u.k===S.src&&prev&&u.u===prev.u))S.val='';
+  renderAnalyte();
+}
+$('#an').addEventListener('change',e=>setAnalyte(e.target.value));
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)setAnalyte(b.dataset.an);});
+$('#fields').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;S.src=k;S.val=e.target.value;recalc();});
+$('#pm').addEventListener('input',e=>{S.pm=e.target.value;save();renderAnalyteKeepFocus('#pm');});
+$('#z').addEventListener('input',e=>{S.z=e.target.value;save();renderAnalyteKeepFocus('#z');});
+function renderAnalyteKeepFocus(sel){const el=$(sel),p=el.selectionStart;renderAnalyte();el.focus();try{el.setSelectionRange(p,p);}catch(e){}}
+$('#clear').addEventListener('click',()=>{S.val='';renderAnalyte();$('#fields input').focus();});
+$('#stepsBtn').addEventListener('click',()=>{S.steps=!S.steps;recalc();});
+
+/* ───────────── Inicio ───────────── */
+renderSelect();renderAnalyte();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
